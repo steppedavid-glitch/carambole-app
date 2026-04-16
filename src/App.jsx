@@ -7,10 +7,12 @@ export default function App() {
 
   const [selected, setSelected] = useState([]);
   const [scores, setScores] = useState({});
-  const [inputs, setInputs] = useState({});
   const [targets, setTargets] = useState({});
   const [turns, setTurns] = useState(0);
   const [currentGame, setCurrentGame] = useState(false);
+
+  const [activePlayer, setActivePlayer] = useState(null);
+  const [inputValue, setInputValue] = useState("");
 
   useEffect(() => localStorage.setItem("players", JSON.stringify(players)), [players]);
 
@@ -25,8 +27,7 @@ export default function App() {
       setSelected(selected.filter(x => x.id !== p.id));
     } else if (selected.length < 2) {
       setSelected([...selected, p]);
-      setTargets({ ...targets, [p.id]: 20 });
-      setInputs({ ...inputs, [p.id]: 0 });
+      setTargets(prev => ({ ...prev, [p.id]: 20 }));
     }
   };
 
@@ -34,134 +35,98 @@ export default function App() {
     const initScores = {};
     selected.forEach(p => initScores[p.id] = 0);
     setScores(initScores);
-    setTurns(0);
+    setTurns(1);
     setCurrentGame(true);
+    setActivePlayer(selected[0]?.id);
   };
 
-  const updateScore = (id) => {
-    const val = Number(inputs[id] || 0);
-    setScores({ ...scores, [id]: scores[id] + val });
-    setInputs({ ...inputs, [id]: 0 });
+  const addDigit = (d) => setInputValue(prev => prev + d);
+  const clearInput = () => setInputValue("");
+
+  const submitScore = () => {
+    if (!activePlayer) return;
+    const val = Number(inputValue || 0);
+    const newScores = { ...scores, [activePlayer]: scores[activePlayer] + val };
+    setScores(newScores);
+    setInputValue("");
+
+    // wissel speler
+    const next = selected.find(p => p.id !== activePlayer)?.id;
+    setActivePlayer(next);
   };
 
-  const getColorStyle = (color) => {
-    if (color === "yellow") return { background: "#f1c40f", color: "black" };
-    return { background: "#ecf0f1", color: "black" };
-  };
+  const getColor = (c) => c === "yellow" ? "#f1c40f" : "#ecf0f1";
 
   return (
-    <div style={{ background: "#111", color: "white", minHeight: "100vh", padding: 15 }}>
-      <h1 style={{ fontSize: 28 }}>🎱 Carambole Pro</h1>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(180deg,#0f2027,#203a43,#2c5364)", color: "white", padding: 10 }}>
+
+      <h1 style={{ textAlign: "center" }}>🎱 Carambole Pro John Steppe</h1>
 
       {!currentGame && (
         <>
-          <h2>Spelers toevoegen</h2>
-
-          <input
-            value={newPlayer}
-            onChange={e => setNewPlayer(e.target.value)}
-            placeholder="Naam"
-            style={{ padding: 10, fontSize: 16, width: "60%" }}
-          />
-
-          <select
-            value={ballColor}
-            onChange={e => setBallColor(e.target.value)}
-            style={{ padding: 10, marginLeft: 10 }}
-          >
+          <input value={newPlayer} onChange={e => setNewPlayer(e.target.value)} placeholder="Naam" />
+          <select value={ballColor} onChange={e => setBallColor(e.target.value)}>
             <option value="white">Wit</option>
             <option value="yellow">Geel</option>
           </select>
+          <button onClick={addPlayer}>Toevoegen</button>
 
-          <button onClick={addPlayer} style={{ padding: 10, marginLeft: 10 }}>
-            Toevoegen
-          </button>
-
-          <h2 style={{ marginTop: 20 }}>Selecteer spelers</h2>
-
+          <h3>Selecteer spelers</h3>
           {players.map(p => (
-            <button
-              key={p.id}
-              onClick={() => selectPlayer(p)}
-              style={{
-                display: "block",
-                width: "100%",
-                marginBottom: 10,
-                padding: 15,
-                fontSize: 18,
-                borderRadius: 8,
-                border: "none",
-                ...getColorStyle(p.color),
-                opacity: selected.find(x => x.id === p.id) ? 1 : 0.5
-              }}
-            >
-              {p.name} ({p.color})
-            </button>
+            <button key={p.id} onClick={() => selectPlayer(p)} style={{
+              display: "block", width: "100%", margin: 5, padding: 12,
+              background: getColor(p.color), color: "black",
+              opacity: selected.find(x => x.id === p.id) ? 1 : 0.5
+            }}>{p.name}</button>
           ))}
 
           {selected.length === 2 && (
-            <div style={{ marginTop: 20 }}>
-              <h2>Game setup</h2>
+            <>
               {selected.map(p => (
-                <div key={p.id} style={{ marginBottom: 10 }}>
-                  {p.name}
-                  <input
-                    type="number"
-                    value={targets[p.id]}
-                    onChange={e => setTargets({ ...targets, [p.id]: Number(e.target.value) })}
-                    style={{ marginLeft: 10, padding: 8, width: 80 }}
-                  />
+                <div key={p.id}>{p.name}
+                  <input type="number" value={targets[p.id]}
+                    onChange={e => setTargets({ ...targets, [p.id]: Number(e.target.value) })} />
                 </div>
               ))}
-
-              <button
-                onClick={startGame}
-                style={{ width: "100%", padding: 15, fontSize: 18, background: "#3498db", border: "none", borderRadius: 8 }}
-              >
-                Start match
-              </button>
-            </div>
+              <button onClick={startGame}>Start</button>
+            </>
           )}
         </>
       )}
 
       {currentGame && (
-        <div>
-          <h2>Match</h2>
-
-          {selected.map(p => (
-            <div key={p.id} style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 20 }}>{p.name}</div>
-              <div style={{ fontSize: 32, fontWeight: "bold" }}>
-                {scores[p.id]} / {targets[p.id]}
+        <>
+          {/* SCOREBOARD */}
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+            {selected.map(p => (
+              <div key={p.id} style={{ flex: 1, textAlign: "center", padding: 10, background: activePlayer === p.id ? "#27ae60" : "#333" }}>
+                <div>{p.name}</div>
+                <div style={{ fontSize: 40 }}>{scores[p.id]}</div>
+                <div>/ {targets[p.id]}</div>
               </div>
+            ))}
+          </div>
 
-              <input
-                type="number"
-                value={inputs[p.id] || ""}
-                onChange={e => setInputs({ ...inputs, [p.id]: e.target.value })}
-                placeholder="punten"
-                style={{ padding: 15, fontSize: 18, width: "100%", marginBottom: 10 }}
-              />
+          <div style={{ textAlign: "center" }}>Beurt: {turns}</div>
 
-              <button
-                onClick={() => updateScore(p.id)}
-                style={{ width: "100%", padding: 15, fontSize: 18, background: "#2ecc71", border: "none", borderRadius: 8 }}
-              >
-                Voeg punten toe
-              </button>
+          {/* NUMPAD */}
+          <div style={{ marginTop: 20 }}>
+            <div style={{ fontSize: 30, textAlign: "center", marginBottom: 10 }}>{inputValue || 0}</div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
+              {[1,2,3,4,5,6,7,8,9].map(n => (
+                <button key={n} onClick={() => addDigit(n.toString())} style={{ padding: 20, fontSize: 20 }}>{n}</button>
+              ))}
+              <button onClick={clearInput}>C</button>
+              <button onClick={() => addDigit("0")}>0</button>
+              <button onClick={submitScore} style={{ background: "#2ecc71" }}>OK</button>
             </div>
-          ))}
+          </div>
 
-          <div style={{ fontSize: 18 }}>Beurten: {turns}</div>
-
-          <button
-            onClick={() => setTurns(turns + 1)}
-            style={{ width: "100%", padding: 15, fontSize: 18, marginTop: 10, background: "#f1c40f", border: "none", borderRadius: 8 }}
-          >
+          <button onClick={() => setTurns(turns + 1)} style={{ width: "100%", marginTop: 15, padding: 15, background: "#f1c40f" }}>
             Volgende beurt
           </button>
-        </div>
+        </>
       )}
     </div>
   );
