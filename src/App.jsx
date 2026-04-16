@@ -135,7 +135,7 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', padding: 20, background: 'var(--bg)', color: 'var(--text)', ...theme }}>
 
-      <h1 style={{ textAlign: 'center' }}>🎱 Carambole John & David Steppe</h1>
+      <h1 style={{ textAlign: 'center' }}>🎱 Carambole Pro John Steppe</h1>
 
       <div style={{ textAlign: 'center', marginBottom: 10 }}>
         <Button onClick={() => setDarkMode(!darkMode)} style={{ background: '#6366f1', color: 'white' }}>
@@ -163,6 +163,24 @@ export default function App() {
                 <Button onClick={() => setSelected(prev => prev.find(x => x.id === p.id) ? prev.filter(x => x.id !== p.id) : [...prev, p])}>
                   {p.photo && avatar(p)} {p.name}
                 </Button>
+
+                {/* UPDATE PHOTO */}
+                <div style={{ marginTop: 5 }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        setPlayers(prev => prev.map(pl =>
+                          pl.id === p.id ? { ...pl, photo: reader.result } : pl
+                        ));
+                      };
+                      if (file) reader.readAsDataURL(file);
+                    }}
+                  />
+                </div>
 
                 {selected.find(x => x.id === p.id) && (
                   <input type="number" placeholder="target" value={targets[p.id] || ''} onChange={e => setTargets({ ...targets, [p.id]: Number(e.target.value) })} />
