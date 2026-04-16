@@ -31,24 +31,17 @@ export default function App() {
   const [inputValue, setInputValue] = useState("");
   const [undoStack, setUndoStack] = useState([]);
 
+  const [winner, setWinner] = useState(null);
   const [darkMode, setDarkMode] = useState(() => JSON.parse(localStorage.getItem("darkMode")) || false);
 
   useEffect(() => localStorage.setItem("players", JSON.stringify(players)), [players]);
   useEffect(() => localStorage.setItem("games", JSON.stringify(games)), [games]);
   useEffect(() => localStorage.setItem("darkMode", JSON.stringify(darkMode)), [darkMode]);
 
-  // CSS variables for theme
   const theme = {
     '--bg': darkMode ? '#0f172a' : '#f1f5f9',
     '--card': darkMode ? '#1e293b' : '#ffffff',
     '--text': darkMode ? '#e2e8f0' : '#0f172a'
-  };
-
-  const addPlayer = () => {
-    if (!newPlayer) return;
-    setPlayers([...players, { name: newPlayer, id: Date.now(), color: ballColor, photo }]);
-    setNewPlayer("");
-    setPhoto(null);
   };
 
   const handlePhoto = (e) => {
@@ -56,6 +49,13 @@ export default function App() {
     const reader = new FileReader();
     reader.onload = () => setPhoto(reader.result);
     if (file) reader.readAsDataURL(file);
+  };
+
+  const addPlayer = () => {
+    if (!newPlayer) return;
+    setPlayers([...players, { name: newPlayer, id: Date.now(), color: ballColor, photo }]);
+    setNewPlayer("");
+    setPhoto(null);
   };
 
   const startGame = () => {
@@ -98,6 +98,7 @@ export default function App() {
 
     const win = selected.find(p => newScores[p.id] >= targets[p.id]);
     if (win) {
+      setWinner(win);
       setGames([...games, { players: selected, scores: newScores, winner: win }]);
       setCurrentGame(false);
     }
@@ -127,7 +128,7 @@ export default function App() {
 
   const avatar = (p) => (
     <div style={{ position: 'relative', display: 'inline-block' }}>
-      <img src={p.photo} alt="" width={60} height={60} style={{ borderRadius: '50%', objectFit: 'cover', border: '3px solid white' }} />
+      {p.photo && <img src={p.photo} alt="" width={60} height={60} style={{ borderRadius: '50%' }} />}
       <div style={{ position: 'absolute', bottom: 0, right: 0, width: 18, height: 18, borderRadius: '50%', background: p.color === 'yellow' ? '#facc15' : '#ffffff', border: '2px solid #000' }} />
     </div>
   );
@@ -135,78 +136,61 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', padding: 20, background: 'var(--bg)', color: 'var(--text)', ...theme }}>
 
+      {/* HEADER */}
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <h1 style={{
-          fontSize: 28,
-          fontWeight: '800',
-          letterSpacing: 1,
-          background: 'linear-gradient(90deg,#2563eb,#22c55e)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent'
-        }}>
-          🎱 Carambole John & David Steppe
+        <h1 style={{ fontSize: 28, fontWeight: '800', background: 'linear-gradient(90deg,#2563eb,#22c55e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          🎱 Carambole Pro John Steppe
         </h1>
-        <div style={{ fontSize: 14, opacity: 0.7 }}>
-          Live scoring • Stats • Performance
-        </div>
+        <Button onClick={() => setDarkMode(!darkMode)}>🌙 Toggle</Button>
       </div>
 
-      <div style={{ textAlign: 'center', marginBottom: 10 }}>
-        <Button onClick={() => setDarkMode(!darkMode)} style={{ background: '#6366f1', color: 'white' }}>
-          🌙 Toggle Dark Mode
-        </Button>
-      </div>
+      {/* WINNER SCREEN */}
+      {winner && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div style={{ background: 'white', padding: 30, borderRadius: 16 }}>
+            <div style={{ textAlign: 'center' }}>
+              {winner.photo && (
+                <img
+                  src={winner.photo}
+                  alt=""
+                  style={{ width: 120, height: 120, borderRadius: '50%', objectFit: 'cover', marginBottom: 15, border: '4px solid #22c55e' }}
+                />
+              )}
+              <h2 style={{ fontSize: 24 }}>🏆 {winner.name} wint!</h2>
+            </div>
+            <Button onClick={() => { setWinner(null); setSelected([]); }}>Terug</Button>
+          </div>
+        </div>
+      )}
 
       {!currentGame && (
-        <>
-          <Card>
-            <h3>Speler toevoegen</h3>
-            <input value={newPlayer} onChange={e => setNewPlayer(e.target.value)} placeholder="Naam" />
-            <select value={ballColor} onChange={e => setBallColor(e.target.value)}>
-              <option value="white">Wit</option>
-              <option value="yellow">Geel</option>
-            </select>
-            <input type="file" accept="image/*" onChange={handlePhoto} />
-            <Button onClick={addPlayer}>Toevoegen</Button>
-          </Card>
+        <Card>
+          <h3>Speler toevoegen</h3>
+          <input value={newPlayer} onChange={e => setNewPlayer(e.target.value)} placeholder="Naam" />
+          <select value={ballColor} onChange={e => setBallColor(e.target.value)}>
+            <option value="white">Wit</option>
+            <option value="yellow">Geel</option>
+          </select>
+          <input type="file" onChange={handlePhoto} />
+          <Button onClick={addPlayer}>Toevoegen</Button>
 
-          <Card>
-            <h3>Selecteer spelers + target</h3>
-            {players.map(p => (
-              <div key={p.id} style={{ marginBottom: 10 }}>
-                <Button onClick={() => setSelected(prev => prev.find(x => x.id === p.id) ? prev.filter(x => x.id !== p.id) : [...prev, p])}>
-                  {p.photo && avatar(p)} {p.name}
-                </Button>
+          <h3>Selecteer spelers</h3>
+          {players.map(p => (
+            <div key={p.id}>
+              <Button onClick={() => setSelected(prev => prev.find(x => x.id === p.id) ? prev.filter(x => x.id !== p.id) : [...prev, p])}>
+                {avatar(p)} {p.name}
+              </Button>
 
-                {/* UPDATE PHOTO */}
-                <div style={{ marginTop: 5 }}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files[0];
-                      const reader = new FileReader();
-                      reader.onload = () => {
-                        setPlayers(prev => prev.map(pl =>
-                          pl.id === p.id ? { ...pl, photo: reader.result } : pl
-                        ));
-                      };
-                      if (file) reader.readAsDataURL(file);
-                    }}
-                  />
-                </div>
+              {selected.find(x => x.id === p.id) && (
+                <input type="number" placeholder="target" value={targets[p.id] || ''} onChange={e => setTargets({ ...targets, [p.id]: Number(e.target.value) })} />
+              )}
+            </div>
+          ))}
 
-                {selected.find(x => x.id === p.id) && (
-                  <input type="number" placeholder="target" value={targets[p.id] || ''} onChange={e => setTargets({ ...targets, [p.id]: Number(e.target.value) })} />
-                )}
-              </div>
-            ))}
-
-            {selected.length === 2 && (
-              <Button onClick={startGame}>Start match</Button>
-            )}
-          </Card>
-        </>
+          {selected.length === 2 && (
+            <Button onClick={startGame}>Start match</Button>
+          )}
+        </Card>
       )}
 
       {currentGame && (
@@ -215,13 +199,12 @@ export default function App() {
             {selected.map(p => (
               <div key={p.id} style={{ flex: 1, textAlign: 'center', padding: 20,
                 background: activePlayer === p.id ? '#22c55e' : '#e2e8f0',
-                borderRadius: 12,
                 border: activePlayer === p.id ? '3px solid #16a34a' : '2px solid transparent',
                 boxShadow: activePlayer === p.id ? '0 0 25px rgba(34,197,94,0.7)' : 'none',
-                transition: 'all 0.35s ease',
-                transform: activePlayer === p.id ? 'scale(1.03)' : 'scale(1)'
+                transform: activePlayer === p.id ? 'scale(1.03)' : 'scale(1)',
+                transition: 'all 0.3s ease'
               }}>
-                {p.photo && avatar(p)}
+                {avatar(p)}
                 <div>{p.name}</div>
                 <div style={{ fontSize: 40 }}>{scores[p.id]}</div>
                 <div>/ {targets[p.id]}</div>
@@ -233,14 +216,14 @@ export default function App() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
             {[1,2,3,4,5,6,7,8,9].map(n => (
-              <Button key={n} onClick={() => addDigit(n.toString())} style={{ fontSize: 24, padding: 28, height: 80 }}>{n}</Button>
+              <Button key={n} onClick={() => addDigit(n.toString())} style={{ height: 80 }}>{n}</Button>
             ))}
-            <Button onClick={clearInput} style={{ fontSize: 20, padding: 28, height: 80, background: '#facc15' }}>C</Button>
-            <Button onClick={() => addDigit('0')} style={{ fontSize: 24, padding: 28, height: 80 }}>0</Button>
-            <Button onClick={submitScore} style={{ fontSize: 20, padding: 28, height: 80, background: '#22c55e', color: 'white' }}>OK</Button>
+            <Button onClick={clearInput} style={{ height: 80 }}>C</Button>
+            <Button onClick={() => addDigit('0')} style={{ height: 80 }}>0</Button>
+            <Button onClick={submitScore} style={{ height: 80, background: '#22c55e', color: 'white' }}>OK</Button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginTop: 15 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginTop: 10 }}>
             <Button onClick={undo} style={{ height: 80, background: '#ef4444', color: 'white' }}>Undo</Button>
             <Button onClick={nextTurn} style={{ height: 80, background: '#3b82f6', color: 'white' }}>Beurt</Button>
             <Button onClick={newMatch} style={{ height: 80, background: '#6b7280', color: 'white' }}>New</Button>
