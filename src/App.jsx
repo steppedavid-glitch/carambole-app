@@ -136,7 +136,20 @@ export default function App() {
   return (
     <div style={{ padding: 20, background: '#f1f5f9' }}>
 
-      <h1>🎱 Carambole John & David Steppe</h1>
+      <div style={{textAlign:'center',marginBottom:20}}>
+        <div style={{
+          display:'inline-block',
+          padding:'12px 24px',
+          borderRadius:16,
+          background:'linear-gradient(90deg,#2563eb,#22c55e)',
+          color:'white',
+          fontSize:26,
+          fontWeight:'800',
+          boxShadow:'0 0 20px rgba(37,99,235,0.5)'
+        }}>
+          🎱 Carambole John & David Steppe
+        </div>
+      </div>
 
       {!currentGame && (
         <div>
@@ -186,13 +199,34 @@ export default function App() {
 
           <h3>Selecteer spelers</h3>
           {players.map(p => (
-            <div key={p.id}>
-              <button onClick={() => setSelected(prev => prev.find(x => x.id === p.id) ? prev.filter(x => x.id !== p.id) : [...prev, p])}>
+            <div key={p.id} style={{marginBottom:12}}>
+              <button
+                onClick={() => setSelected(prev => prev.find(x => x.id === p.id) ? prev.filter(x => x.id !== p.id) : [...prev, p])}
+                style={{
+                  display:'flex',
+                  alignItems:'center',
+                  gap:12,
+                  width:'100%',
+                  padding:12,
+                  borderRadius:14,
+                  border:'none',
+                  background:selected.find(x=>x.id===p.id)?'#22c55e':'#ffffff',
+                  color:selected.find(x=>x.id===p.id)?'white':'black',
+                  fontSize:18,
+                  fontWeight:'600'
+                }}
+              >
+                {p.photo && <img src={p.photo} style={{width:50,height:50,borderRadius:'50%'}} />}
                 {p.name}
               </button>
 
               {selected.find(x => x.id === p.id) && (
-                <input type="number" placeholder="target" value={targets[p.id] || ''} onChange={e => setTargets({ ...targets, [p.id]: Number(e.target.value) })} />
+                <input
+                  type="number"
+                  placeholder="target"
+                  value={targets[p.id] || ''}
+                  onChange={e => setTargets({ ...targets, [p.id]: Number(e.target.value) })}
+                />
               )}
             </div>
           ))}
@@ -203,13 +237,44 @@ export default function App() {
 
       {currentGame && (
         <div>
-          <div style={{ display: 'flex' }}>
+          <div style={{ display: 'flex', gap: 12 }}>
             {selected.map(p => (
-              <div key={p.id} style={{ flex: 1, textAlign: 'center', background: activePlayer === p.id ? '#22c55e' : '#e2e8f0' }}>
-                <div>{p.name}</div>
-                <div style={{ fontSize: 40 }}>{scores[p.id]}</div>
+              <div key={p.id} style={{
+                flex: 1,
+                textAlign: 'center',
+                padding: 16,
+                background: activePlayer === p.id ? '#22c55e' : '#e2e8f0',
+                borderRadius: 16,
+                border: activePlayer === p.id ? '4px solid #16a34a' : '2px solid transparent',
+                boxShadow: activePlayer === p.id ? '0 0 20px rgba(34,197,94,0.7)' : 'none'
+              }}>
+                {p.photo && <img src={p.photo} style={{width:60,height:60,borderRadius:'50%',marginBottom:8}} />}
+                <div style={{fontSize:18,fontWeight:'600'}}>{p.name}</div>
+                <div style={{ fontSize: 42 }}>{scores[p.id]}</div>
+                <div>/ {targets[p.id]}</div>
               </div>
             ))}
+          </div>
+
+          <div style={{ textAlign: 'center', fontSize: 40, margin:10 }}>{inputValue || 0}</div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
+            {[1,2,3,4,5,6,7,8,9].map(n => (
+              <button key={n} onClick={() => addDigit(n.toString())}
+                style={{ height: 80, fontSize: 32, borderRadius:12, background:'#ffffff' }}>{n}</button>
+            ))}
+            <button onClick={clearInput} style={{ height: 80, fontSize: 28, borderRadius:12, background: '#facc15' }}>C</button>
+            <button onClick={() => addDigit('0')} style={{ height: 80, fontSize: 32, borderRadius:12 }}>0</button>
+            <button onClick={submitScore} style={{ height: 80, fontSize: 28, borderRadius:12, background: '#22c55e', color:'white' }}>OK</button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginTop: 12 }}>
+            <button onClick={nextTurn} style={{ height: 80, borderRadius:12, background: '#3b82f6', color:'white' }}>Beurt</button>
+            <button onClick={() => setCurrentGame(false)} style={{ height: 80, borderRadius:12, background: '#6b7280', color:'white' }}>Stop</button>
+            <div></div>
+          </div>
+        </div>
+      )}
           </div>
 
           <div style={{ textAlign: 'center', fontSize: 36 }}>{inputValue || 0}</div>
