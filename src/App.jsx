@@ -136,7 +136,7 @@ export default function App() {
   return (
     <div style={{ padding: 20, background: '#f1f5f9' }}>
 
-      <h1>🎱 Carambole Pro John Steppe</h1>
+      <h1>🎱 Carambole John & David Steppe</h1>
 
       {!currentGame && (
         <div>
