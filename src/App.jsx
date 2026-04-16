@@ -19,33 +19,51 @@ export default function App() {
   useEffect(() => localStorage.setItem("players", JSON.stringify(players)), [players]);
   useEffect(() => localStorage.setItem("games", JSON.stringify(games)), [games]);
 
+  // FOTO NIEUW
   const handlePhoto = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = () => setPhoto(reader.result);
     reader.readAsDataURL(file);
+
+    e.target.value = "";
   };
 
-  const updatePlayerPhoto = (id, file) => {
+  // FOTO UPDATE
+  const updatePlayerPhoto = (id, file, input) => {
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = () => {
       setPlayers(prev => prev.map(p => p.id === id ? { ...p, photo: reader.result } : p));
     };
+
     reader.readAsDataURL(file);
+    if (input) input.value = "";
   };
 
+  // SPELER TOEVOEGEN
   const addPlayer = () => {
     if (!newPlayer.trim()) return;
-    setPlayers(prev => [...prev, { id: Date.now(), name: newPlayer, photo }]);
+
+    setPlayers(prev => [
+      ...prev,
+      {
+        id: Date.now() + Math.random(),
+        name: newPlayer,
+        photo: photo || null
+      }
+    ]);
+
     setNewPlayer("");
     setPhoto(null);
+    const input = document.getElementById("newPlayerPhoto");
+    if (input) input.value = "";
   };
 
   const startGame = () => {
-    if (selected.length < 2) return;
-
     const init = {};
     selected.forEach(p => init[p.id] = 0);
 
@@ -76,17 +94,11 @@ export default function App() {
     setHistory(newHistory);
     setInputValue("");
 
-    const win = selected.find(p =>
-      targets[p.id] && newScores[p.id] >= targets[p.id]
-    );
+    const win = selected.find(p => targets[p.id] && newScores[p.id] >= targets[p.id]);
 
     if (win) {
-      setGames(prev => [...prev, {
-        players: selected,
-        winner: win
-      }]);
+      setGames(prev => [...prev, { players: selected, winner: win }]);
 
-      // RESET CLEAN
       setCurrentGame(false);
       setSelected([]);
       setScores({});
@@ -94,7 +106,6 @@ export default function App() {
       setUndoStack([]);
       setTargets({});
       setActivePlayer(null);
-
       return;
     }
 
@@ -124,7 +135,7 @@ export default function App() {
       ) : (
         <div style={{ width: 50, height: 50, borderRadius: "50%", background: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center" }}>+</div>
       )}
-      <input type="file" style={{ display: "none" }} onChange={(e) => updatePlayerPhoto(p.id, e.target.files[0])} />
+      <input type="file" style={{ display: "none" }} onChange={(e) => updatePlayerPhoto(p.id, e.target.files[0], e.target)} />
     </label>
   );
 
@@ -148,30 +159,27 @@ export default function App() {
       {!currentGame && (
         <div>
           <h3>Spelers</h3>
-
           {players.map(p => (
             <div key={p.id} style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
               {avatar(p)}
-              <div style={{ fontSize: 18 }}>{p.name}</div>
+              <div>{p.name}</div>
               <div>🏆 {stats(p)}</div>
             </div>
           ))}
 
           <h3>Toevoegen</h3>
           <input value={newPlayer} onChange={e => setNewPlayer(e.target.value)} />
-          <input type="file" onChange={handlePhoto} />
+          <input id="newPlayerPhoto" type="file" onChange={handlePhoto} />
           <button onClick={addPlayer}>Add</button>
 
           <h3>Selecteer spelers</h3>
           {players.map(p => (
             <div key={p.id}>
-              <button onClick={() =>
-                setSelected(prev =>
-                  prev.find(x => x.id === p.id)
-                    ? prev.filter(x => x.id !== p.id)
-                    : [...prev, p]
-                )
-              }>
+              <button onClick={() => setSelected(prev =>
+                prev.find(x => x.id === p.id)
+                  ? prev.filter(x => x.id !== p.id)
+                  : [...prev, p]
+              )}>
                 {p.name}
               </button>
 
@@ -195,12 +203,7 @@ export default function App() {
 
           <div style={{ display: "flex", gap: 10 }}>
             {selected.map(p => (
-              <div key={p.id} style={{
-                flex: 1,
-                padding: 10,
-                background: activePlayer === p.id ? "#22c55e" : "#e2e8f0",
-                borderRadius: 12
-              }}>
+              <div key={p.id} style={{ flex: 1, padding: 10, background: activePlayer === p.id ? "#22c55e" : "#e2e8f0", borderRadius: 12 }}>
                 {avatar(p)}
                 <div>{p.name}</div>
                 <div style={{ fontSize: 40 }}>{scores[p.id]}</div>
