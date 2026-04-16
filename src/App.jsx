@@ -144,7 +144,7 @@ export default function App() {
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent'
         }}>
-          🎱 Carambole Pro John Steppe
+          🎱 Carambole John & David Steppe
         </h1>
         <div style={{ fontSize: 14, opacity: 0.7 }}>
           Live scoring • Stats • Performance
