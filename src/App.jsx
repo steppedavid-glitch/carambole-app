@@ -2,17 +2,14 @@ import React, { useState, useEffect } from "react";
 
 export default function App() {
   const [players, setPlayers] = useState(() => JSON.parse(localStorage.getItem("players")) || []);
-  const [games, setGames] = useState(() => JSON.parse(localStorage.getItem("games")) || []);
   const [newPlayer, setNewPlayer] = useState("");
   const [selected, setSelected] = useState([]);
   const [scores, setScores] = useState({});
   const [targets, setTargets] = useState({});
   const [turns, setTurns] = useState(0);
-  const [series, setSeries] = useState({});
   const [currentGame, setCurrentGame] = useState(false);
 
   useEffect(() => localStorage.setItem("players", JSON.stringify(players)), [players]);
-  useEffect(() => localStorage.setItem("games", JSON.stringify(games)), [games]);
 
   const addPlayer = () => {
     if (!newPlayer) return;
@@ -31,130 +28,114 @@ export default function App() {
 
   const startGame = () => {
     const initScores = {};
-    const initSeries = {};
-    selected.forEach(p => {
-      initScores[p.id] = 0;
-      initSeries[p.id] = { current: 0, best: 0 };
-    });
-
+    selected.forEach(p => initScores[p.id] = 0);
     setScores(initScores);
-    setSeries(initSeries);
     setTurns(0);
     setCurrentGame(true);
   };
 
   const updateScore = (id, val) => {
-    const newScore = scores[id] + val;
-
-    setSeries(prev => {
-      const curr = val > 0 ? prev[id].current + val : 0;
-      return {
-        ...prev,
-        [id]: {
-          current: curr,
-          best: Math.max(curr, prev[id].best)
-        }
-      };
-    });
-
-    const newScores = { ...scores, [id]: newScore };
-    setScores(newScores);
-
-    const winner = selected.find(p => newScores[p.id] >= targets[p.id]);
-    if (winner) {
-      const newGame = {
-        players: selected,
-        scores: newScores,
-        winner,
-        turns,
-        moyenne: Object.fromEntries(
-          selected.map(p => [p.id, (newScores[p.id] / (turns || 1)).toFixed(2)])
-        ),
-        series
-      };
-
-      setGames([...games, newGame]);
-      setCurrentGame(false);
-      alert(`🏆 ${winner.name} wint!`);
-    }
-  };
-
-  const nextTurn = () => {
-    setTurns(turns + 1);
-    setSeries(prev =>
-      Object.fromEntries(
-        Object.entries(prev).map(([k, v]) => [k, { ...v, current: 0 }])
-      )
-    );
-  };
-
-  // 📊 Stats
-  const getStats = (player) => {
-    const played = games.filter(g => g.players.find(p => p.id === player.id));
-    const wins = played.filter(g => g.winner.id === player.id);
-
-    const avg = played.length
-      ? (played.reduce((sum, g) => sum + Number(g.moyenne[player.id] || 0), 0) / played.length).toFixed(2)
-      : 0;
-
-    const bestSeries = Math.max(0, ...played.map(g => g.series?.[player.id]?.best || 0));
-
-    return { played: played.length, wins: wins.length, avg, bestSeries };
-  };
-
-  const ranking = [...players]
-    .map(p => {
-      const s = getStats(p);
-      return { name: p.name, ...s, rate: s.played ? (s.wins / s.played) : 0 };
-    })
-    .sort((a, b) => b.rate - a.rate);
-
-  const getHeadToHead = (p1, p2) => {
-    const matches = games.filter(g =>
-      g.players.find(p => p.id === p1.id) &&
-      g.players.find(p => p.id === p2.id)
-    );
-
-    return {
-      p1: matches.filter(g => g.winner.id === p1.id).length,
-      p2: matches.filter(g => g.winner.id === p2.id).length
-    };
+    setScores({ ...scores, [id]: scores[id] + val });
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>🎱 Carambole Pro</h1>
+    <div style={{ background: "#111", color: "white", minHeight: "100vh", padding: 15 }}>
+      <h1 style={{ fontSize: 28 }}>🎱 Carambole Pro</h1>
 
-      <h2>Spelers</h2>
-      <input value={newPlayer} onChange={e => setNewPlayer(e.target.value)} />
-      <button onClick={addPlayer}>Toevoegen</button>
+      {!currentGame && (
+        <>
+          <h2>Spelers</h2>
+          <input
+            value={newPlayer}
+            onChange={e => setNewPlayer(e.target.value)}
+            style={{ padding: 10, fontSize: 16, width: "70%" }}
+          />
+          <button onClick={addPlayer} style={{ padding: 10, fontSize: 16 }}>Toevoegen</button>
 
-      {players.map(p => {
-        const s = getStats(p);
-        return (
-          <div key={p.id}>
-            {p.name} | 🎯 {s.played} | 🏆 {s.wins} | Moy {s.avg} | 🔥 {s.bestSeries}
+          <div style={{ marginTop: 15 }}>
+            {players.map(p => (
+              <button
+                key={p.id}
+                onClick={() => selectPlayer(p)}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  marginBottom: 10,
+                  padding: 15,
+                  fontSize: 18,
+                  background: selected.find(x => x.id === p.id) ? "#2ecc71" : "#333",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 8
+                }}
+              >
+                {p.name}
+              </button>
+            ))}
           </div>
-        );
-      })}
 
-      <h2>Ranking</h2>
-      {ranking.map((r, i) => (
-        <div key={i}>
-          #{i + 1} {r.name}
-        </div>
-      ))}
-
-      <h2>Onderlinge stats</h2>
-      {players.map((p1, i) =>
-        players.slice(i + 1).map(p2 => {
-          const h = getHeadToHead(p1, p2);
-          return (
-            <div key={p1.id + p2.id}>
-              {p1.name} vs {p2.name} → {h.p1} - {h.p2}
+          {selected.length === 2 && (
+            <div style={{ marginTop: 20 }}>
+              <h2>Game setup</h2>
+              {selected.map(p => (
+                <div key={p.id} style={{ marginBottom: 10 }}>
+                  {p.name}
+                  <input
+                    type="number"
+                    value={targets[p.id]}
+                    onChange={e => setTargets({ ...targets, [p.id]: Number(e.target.value) })}
+                    style={{ marginLeft: 10, padding: 8, width: 80 }}
+                  />
+                </div>
+              ))}
+              <button
+                onClick={startGame}
+                style={{ width: "100%", padding: 15, fontSize: 18, background: "#3498db", border: "none", borderRadius: 8 }}
+              >
+                Start match
+              </button>
             </div>
-          );
-        })
+          )}
+        </>
+      )}
+
+      {currentGame && (
+        <div>
+          <h2>Match</h2>
+
+          {selected.map(p => (
+            <div key={p.id} style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 20 }}>{p.name}</div>
+              <div style={{ fontSize: 32, fontWeight: "bold" }}>
+                {scores[p.id]} / {targets[p.id]}
+              </div>
+
+              <div style={{ display: "flex", gap: 10 }}>
+                <button
+                  onClick={() => updateScore(p.id, 1)}
+                  style={{ flex: 1, padding: 20, fontSize: 22, background: "#2ecc71", border: "none", borderRadius: 8 }}
+                >
+                  +1
+                </button>
+                <button
+                  onClick={() => updateScore(p.id, -1)}
+                  style={{ flex: 1, padding: 20, fontSize: 22, background: "#e74c3c", border: "none", borderRadius: 8 }}
+                >
+                  -1
+                </button>
+              </div>
+            </div>
+          ))}
+
+          <div style={{ fontSize: 18 }}>Beurten: {turns}</div>
+
+          <button
+            onClick={() => setTurns(turns + 1)}
+            style={{ width: "100%", padding: 15, fontSize: 18, marginTop: 10, background: "#f1c40f", border: "none", borderRadius: 8 }}
+          >
+            Volgende beurt
+          </button>
+        </div>
       )}
     </div>
   );
