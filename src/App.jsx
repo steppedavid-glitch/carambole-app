@@ -121,7 +121,7 @@ export default function App() {
             border: "2px solid rgba(255,255,255,0.2)"
           }}
         >
-          🎱 Carambole John, David, Bjarni & Friends
+          🎱 Carambole Pro John Steppe
         </div>
       </div>
 
@@ -171,11 +171,17 @@ export default function App() {
           </div>
 
           <div style={{ marginTop:10 }}>
-            {history.map((h,i) => (
-              <div key={i}>
-                {players.find(p=>p.id===h.player)?.name}: +{h.value}
+            <div style={{ display: 'flex', gap: 10 }}>
+            {selected.map(p => (
+              <div key={p.id} style={{ flex:1, fontSize:14 }}>
+                {history
+                  .filter(h => h.player === p.id)
+                  .map((h,i) => (
+                    <div key={i}>+{h.value}</div>
+                  ))}
               </div>
             ))}
+          </div>
           </div>
 
           <div style={{ textAlign: 'center', fontSize: 36 }}>{inputValue || 0}</div>
