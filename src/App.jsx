@@ -1,200 +1,214 @@
 import React, { useState, useEffect } from "react";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+
+const Card = ({ children, style }) => (
+  <div style={{ background: "#fff", borderRadius: 16, padding: 16, boxShadow: "0 8px 24px rgba(0,0,0,0.08)", ...style }}>
+    {children}
+  </div>
+);
+
+const Button = ({ children, onClick, style }) => (
+  <button onClick={onClick} style={{ padding: 14, borderRadius: 12, border: "none", fontWeight: 600, cursor: "pointer", ...style }}>
+    {children}
+  </button>
+);
 
 export default function App() {
   const [players, setPlayers] = useState(() => JSON.parse(localStorage.getItem("players")) || []);
   const [games, setGames] = useState(() => JSON.parse(localStorage.getItem("games")) || []);
 
-  const [newPlayer, setNewPlayer] = useState("");
-  const [ballColor, setBallColor] = useState("white");
-
   const [selected, setSelected] = useState([]);
   const [scores, setScores] = useState({});
+  const [history, setHistory] = useState([]);
   const [targets, setTargets] = useState({});
-  const [turns, setTurns] = useState(0);
-  const [series, setSeries] = useState({});
+  const [turns, setTurns] = useState(1);
   const [currentGame, setCurrentGame] = useState(false);
-
   const [activePlayer, setActivePlayer] = useState(null);
   const [inputValue, setInputValue] = useState("");
-  const [winner, setWinner] = useState(null);
 
-  useEffect(() => localStorage.setItem("players", JSON.stringify(players)), [players]);
   useEffect(() => localStorage.setItem("games", JSON.stringify(games)), [games]);
-
-  const addPlayer = () => {
-    if (!newPlayer) return;
-    setPlayers([...players, { name: newPlayer, id: Date.now(), color: ballColor }]);
-    setNewPlayer("");
-  };
-
-  const selectPlayer = (p) => {
-    if (selected.find(x => x.id === p.id)) {
-      setSelected(selected.filter(x => x.id !== p.id));
-    } else if (selected.length < 2) {
-      setSelected([...selected, p]);
-      setTargets(prev => ({ ...prev, [p.id]: 20 }));
-    }
-  };
 
   const startGame = () => {
     const initScores = {};
-    const initSeries = {};
-    selected.forEach(p => {
-      initScores[p.id] = 0;
-      initSeries[p.id] = { current: 0, best: 0 };
-    });
+    selected.forEach(p => initScores[p.id] = 0);
     setScores(initScores);
-    setSeries(initSeries);
+    setHistory([]);
     setTurns(1);
     setCurrentGame(true);
-    setActivePlayer(selected[0]?.id);
+    setActivePlayer(selected[0].id);
   };
 
   const addDigit = (d) => setInputValue(prev => prev + d);
   const clearInput = () => setInputValue("");
 
   const submitScore = () => {
-    if (!activePlayer) return;
     const val = Number(inputValue || 0);
-
-    // update score
     const newScores = { ...scores, [activePlayer]: scores[activePlayer] + val };
+
     setScores(newScores);
 
-    // update series
-    setSeries(prev => {
-      const curr = val > 0 ? prev[activePlayer].current + val : 0;
-      return {
-        ...prev,
-        [activePlayer]: {
-          current: curr,
-          best: Math.max(curr, prev[activePlayer].best)
-        }
-      };
-    });
+    const snapshot = {
+      turn: turns,
+      ...Object.fromEntries(selected.map(p => [p.name, newScores[p.id]]))
+    };
+    setHistory(prev => [...prev, snapshot]);
 
     setInputValue("");
 
-    // winner check
-    const win = selected.find(p => newScores[p.id] >= targets[p.id]);
-    if (win) {
-      setWinner(win);
-      setGames([...games, {
-        players: selected,
-        scores: newScores,
-        winner: win,
-        turns,
-        series
-      }]);
-      setCurrentGame(false);
-      return;
-    }
-
     const next = selected.find(p => p.id !== activePlayer)?.id;
     setActivePlayer(next);
+
+    // check winner
+    const win = selected.find(p => newScores[p.id] >= targets[p.id]);
+    if (win) {
+      setGames([...games, { players: selected, scores: newScores, winner: win, history }]);
+      setCurrentGame(false);
+    }
   };
 
-  const nextTurn = () => {
-    setTurns(turns + 1);
-    setSeries(prev =>
-      Object.fromEntries(Object.entries(prev).map(([k, v]) => [k, { ...v, current: 0 }]))
-    );
-  };
+  const nextTurn = () => setTurns(turns + 1);
 
+  // --- STATS ---
   const stats = (p) => {
     const played = games.filter(g => g.players.find(x => x.id === p.id));
     const wins = played.filter(g => g.winner.id === p.id);
-    const bestSeries = Math.max(0, ...played.map(g => g.series?.[p.id]?.best || 0));
-    return { played: played.length, wins: wins.length, bestSeries };
+
+    const avg = played.length
+      ? (played.reduce((sum, g) => sum + (g.scores[p.id] / (g.history.length || 1)), 0) / played.length).toFixed(2)
+      : 0;
+
+    return { played: played.length, wins: wins.length, avg };
+  };
+
+  const ranking = [...players]
+    .map(p => ({ name: p.name, ...stats(p) }))
+    .sort((a, b) => b.wins - a.wins);
+
+  const headToHead = (p1, p2) => {
+    const matches = games.filter(g =>
+      g.players.find(x => x.id === p1.id) &&
+      g.players.find(x => x.id === p2.id)
+    );
+    return {
+      p1: matches.filter(g => g.winner.id === p1.id).length,
+      p2: matches.filter(g => g.winner.id === p2.id).length
+    };
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "linear-gradient(135deg,#e6f0f3,#cfdfe6)", padding: 10 }}>
+    <div style={{ minHeight: "100vh", background: "#f1f5f9", padding: 20 }}>
 
       <h1 style={{ textAlign: "center" }}>🎱 Carambole Pro John Steppe</h1>
 
-      {/* WINNER MODAL */}
-      {winner && (
-        <div style={{
-          position: "fixed",
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: "rgba(0,0,0,0.6)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        }}>
-          <div style={{ background: "white", padding: 30, borderRadius: 12, textAlign: "center" }}>
-            <h2>🏆 {winner.name} wint!</h2>
-            <button onClick={() => setWinner(null)}>Sluiten</button>
-          </div>
+      {currentGame && (
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 20 }}>
+
+          {/* GAME */}
+          <Card>
+            <div style={{ display: "flex", gap: 10 }}>
+              {selected.map(p => (
+                <div key={p.id} style={{ flex: 1, textAlign: "center", padding: 20,
+                  background: activePlayer === p.id ? "#22c55e" : "#e2e8f0", borderRadius: 12 }}>
+                  <div>{p.name}</div>
+                  <div style={{ fontSize: 48 }}>{scores[p.id]}</div>
+                  <div>/ {targets[p.id]}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ textAlign: "center", margin: 10 }}>Beurt: {turns}</div>
+            <div style={{ textAlign: "center", fontSize: 40 }}>{inputValue || 0}</div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
+              {[1,2,3,4,5,6,7,8,9].map(n => (
+                <Button key={n} onClick={() => addDigit(n.toString())} style={{ background: "#fff" }}>{n}</Button>
+              ))}
+              <Button onClick={clearInput} style={{ background: "#fbbf24" }}>C</Button>
+              <Button onClick={() => addDigit("0")} style={{ background: "#fff" }}>0</Button>
+              <Button onClick={submitScore} style={{ background: "#22c55e", color: "white" }}>OK</Button>
+            </div>
+
+            <Button onClick={nextTurn} style={{ width: "100%", marginTop: 10, background: "#3b82f6", color: "white" }}>
+              Volgende beurt
+            </Button>
+          </Card>
+
+          {/* GRAPH */}
+          <Card>
+            <h3>Scoreverloop</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={history}>
+                <XAxis dataKey="turn" />
+                <YAxis />
+                <Tooltip />
+                {selected.map(p => (
+                  <Line key={p.id} type="monotone" dataKey={p.name} stroke="#2563eb" />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          </Card>
+
         </div>
       )}
 
-      {currentGame && (
-        <>
-          <div style={{ display: "flex", borderRadius: 12, overflow: "hidden", marginBottom: 10 }}>
-            {selected.map(p => (
-              <div key={p.id} style={{ flex: 1, padding: 15, textAlign: "center",
-                background: activePlayer === p.id ? "#27ae60" : "#ecf0f1" }}>
-                <div>{p.name}</div>
-                <div style={{ fontSize: 40 }}>{scores[p.id]}</div>
-                <div>/ {targets[p.id]}</div>
-                <div>🔥 {series[p.id]?.best}</div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ textAlign: "center" }}>Beurt: {turns}</div>
-
-          <div style={{ textAlign: "center", fontSize: 32 }}>{inputValue || 0}</div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
-            {[1,2,3,4,5,6,7,8,9].map(n => (
-              <button key={n} onClick={() => addDigit(n.toString())} style={btn()}>{n}</button>
-            ))}
-            <button onClick={clearInput} style={btn("#bdc3c7")}>C</button>
-            <button onClick={() => addDigit("0")} style={btn()}>0</button>
-            <button onClick={submitScore} style={btn("#27ae60","white")}>OK</button>
-          </div>
-
-          <button onClick={nextTurn} style={{ width: "100%", marginTop: 10, padding: 15, background: "#f1c40f" }}>
-            Volgende beurt
-          </button>
-        </>
-      )}
-
       {!currentGame && (
-        <>
-          <input value={newPlayer} onChange={e => setNewPlayer(e.target.value)} placeholder="Naam" />
-          <select value={ballColor} onChange={e => setBallColor(e.target.value)}>
-            <option value="white">Wit</option>
-            <option value="yellow">Geel</option>
-          </select>
-          <button onClick={addPlayer}>Toevoegen</button>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20 }}>
 
-          <h3>Spelers</h3>
-          {players.map(p => {
-            const s = stats(p);
-            return (
-              <div key={p.id}>
-                {p.name} | 🎯 {s.played} | 🏆 {s.wins} | 🔥 {s.bestSeries}
-              </div>
-            );
-          })}
+          {/* PLAYERS */}
+          <Card>
+            <h3>Spelers</h3>
+            {players.map(p => {
+              const s = stats(p);
+              return (
+                <div key={p.id} style={{ marginBottom: 8 }}>
+                  {p.name} | 🎯 {s.played} | 🏆 {s.wins} | Moy {s.avg}
+                </div>
+              );
+            })}
+          </Card>
 
-          {players.map(p => (
-            <button key={p.id} onClick={() => selectPlayer(p)}>{p.name}</button>
-          ))}
+          {/* RANKING */}
+          <Card>
+            <h3>Ranking</h3>
+            {ranking.map((r, i) => (
+              <div key={i}>#{i + 1} {r.name}</div>
+            ))}
+          </Card>
 
-          {selected.length === 2 && (
-            <button onClick={startGame}>Start match</button>
-          )}
-        </>
+          {/* HEAD TO HEAD */}
+          <Card>
+            <h3>Onderlinge stats</h3>
+            {players.map((p1, i) =>
+              players.slice(i + 1).map(p2 => {
+                const h = headToHead(p1, p2);
+                return (
+                  <div key={p1.id + p2.id}>
+                    {p1.name} vs {p2.name}: {h.p1} - {h.p2}
+                  </div>
+                );
+              })
+            )}
+          </Card>
+
+          {/* SELECT */}
+          <Card style={{ gridColumn: "span 3" }}>
+            <h3>Selecteer spelers</h3>
+            {players.map(p => (
+              <Button key={p.id} onClick={() => setSelected(prev => prev.find(x => x.id === p.id) ? prev.filter(x => x.id !== p.id) : [...prev, p])} style={{ marginBottom: 5, width: "100%" }}>
+                {p.name}
+              </Button>
+            ))}
+
+            {selected.length === 2 && (
+              <Button onClick={startGame} style={{ marginTop: 10, width: "100%", background: "#22c55e", color: "white" }}>
+                Start match
+              </Button>
+            )}
+          </Card>
+
+        </div>
       )}
+
     </div>
   );
-}
-
-function btn(bg = "#fff", color = "#000") {
-  return { padding: 20, fontSize: 20, borderRadius: 10, background: bg, color: color };
 }
