@@ -15,7 +15,7 @@ export default function App() {
   const [games, setGames] = useState([]);
   const [undoStack, setUndoStack] = useState([]);
 
-  // FOTO
+  // FOTO NIEUW
   const handlePhoto = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -25,6 +25,7 @@ export default function App() {
     reader.readAsDataURL(file);
   };
 
+  // FOTO UPDATE
   const updatePhoto = (id, e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -42,6 +43,7 @@ export default function App() {
     e.target.value = "";
   };
 
+  // SPELER TOEVOEGEN
   const addPlayer = () => {
     if (!name.trim()) return;
 
@@ -59,6 +61,7 @@ export default function App() {
     setPhotoKey(prev => prev + 1);
   };
 
+  // START GAME
   const startGame = () => {
     const init = {};
     selected.forEach(p => (init[p.id] = 0));
@@ -69,10 +72,10 @@ export default function App() {
     setUndoStack([]);
   };
 
+  // SCORE
   const submitScore = () => {
     const val = Number(input || 0);
 
-    // save undo
     setUndoStack(prev => [
       ...prev,
       { scores: { ...scores }, active }
@@ -115,6 +118,30 @@ export default function App() {
     setUndoStack([...undoStack]);
   };
 
+  // 📊 STATS
+  const getStats = (player) => {
+    const played = games.filter(g =>
+      g.players.find(p => p.id === player.id)
+    );
+
+    const wins = played.filter(g => g.winner.id === player.id);
+
+    const winRate = played.length
+      ? Math.round((wins.length / played.length) * 100)
+      : 0;
+
+    return {
+      played: played.length,
+      wins: wins.length,
+      winRate
+    };
+  };
+
+  // 🏆 RANKING
+  const ranking = [...players].sort((a, b) => {
+    return getStats(b).wins - getStats(a).wins;
+  });
+
   const btn = {
     height: 80,
     fontSize: 32,
@@ -131,12 +158,15 @@ export default function App() {
       {!game && (
         <div>
 
+          {/* TOEVOEGEN */}
           <input value={name} onChange={e => setName(e.target.value)} />
           <input key={photoKey} type="file" onChange={handlePhoto} />
           <button onClick={addPlayer}>Toevoegen</button>
 
+          {/* SPELERS */}
           {players.map(p => (
-            <div key={p.id} style={{ display: "flex", gap: 10, marginTop: 10 }}>
+            <div key={p.id} style={{ display: "flex", gap: 10, marginTop: 10, alignItems: "center" }}>
+
               <label>
                 {p.photo ? (
                   <img src={p.photo} style={{ width: 50, height: 50, borderRadius: "50%" }} />
@@ -146,13 +176,15 @@ export default function App() {
                 <input type="file" hidden onChange={(e) => updatePhoto(p.id, e)} />
               </label>
 
-              <button onClick={() =>
-                setSelected(prev =>
-                  prev.find(x => x.id === p.id)
-                    ? prev.filter(x => x.id !== p.id)
-                    : [...prev, p]
-                )
-              }>
+              <button
+                onClick={() =>
+                  setSelected(prev =>
+                    prev.find(x => x.id === p.id)
+                      ? prev.filter(x => x.id !== p.id)
+                      : [...prev, p]
+                  )
+                }
+              >
                 {p.name}
               </button>
 
@@ -172,16 +204,38 @@ export default function App() {
             <button onClick={startGame}>Start match</button>
           )}
 
-          <h3>Resultaten</h3>
-          {games.map((g, i) => (
-            <div key={i}>{g.winner.name} won</div>
-          ))}
+          {/* 🏆 RANKING */}
+          <h2 style={{ marginTop: 20 }}>🏆 Ranking</h2>
+
+          {ranking.map((p, i) => {
+            const s = getStats(p);
+
+            return (
+              <div key={p.id} style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: 10,
+                marginBottom: 6,
+                background: "#fff",
+                borderRadius: 10
+              }}>
+                <div>
+                  {i + 1}. {p.name}
+                </div>
+
+                <div>
+                  🏆 {s.wins} | 🎯 {s.played} | {s.winRate}%
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
       {game && (
         <div>
 
+          {/* SPELERS */}
           <div style={{ display: "flex", gap: 10 }}>
             {selected.map(p => (
               <div key={p.id} style={{
