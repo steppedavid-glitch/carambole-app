@@ -112,15 +112,19 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', padding: 20, background: '#f1f5f9' }}>
 
-      <h1 style={{ textAlign: 'center' }}>🎱 Carambole Pro John Steppe</h1>
+      <h1 style={{ textAlign: 'center', fontSize: 28, fontWeight: 'bold' }}>🎱 Carambole John & David Steppe</h1>
 
       {/* WINNER */}
       {winner && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
           <div style={{ background: 'white', padding: 30, borderRadius: 16, textAlign: 'center' }}>
-            {winner.photo && <img src={winner.photo} alt="" style={{ width: 120, height: 120, borderRadius: '50%', marginBottom: 10 }} />}
+            {winner.photo && (
+              <img src={winner.photo} alt="" style={{ width: 140, height: 140, borderRadius: '50%', marginBottom: 15, border: '5px solid #22c55e' }} />
+            )}
             <h2>🏆 {winner.name} wint!</h2>
-            <button onClick={newMatch}>Nieuwe match</button>
+            <button onClick={newMatch} style={{ marginTop: 15, padding: 12, borderRadius: 10, background: '#22c55e', color: 'white', border: 'none', width: '100%' }}>
+              Nieuwe match
+            </button>
           </div>
         </div>
       )}
@@ -138,7 +142,7 @@ export default function App() {
 
           <h3>Selecteer spelers</h3>
           {players.map(p => (
-            <div key={p.id}>
+            <div key={p.id} style={{ marginBottom: 10 }}>
               <button onClick={() => setSelected(prev => prev.find(x => x.id === p.id) ? prev.filter(x => x.id !== p.id) : [...prev, p])}>
                 {avatar(p)} {p.name}
               </button>
@@ -167,54 +171,44 @@ export default function App() {
 
       {currentGame && (
         <div>
-          <div style={{ display: 'flex' }}>
+          <div style={{ display: 'flex', gap: 10 }}>
             {selected.map(p => (
-              <div key={p.id} style={{ flex: 1, textAlign: 'center', padding: 20 }}>
+              <div key={p.id}
+                style={{
+                  flex: 1,
+                  textAlign: 'center',
+                  padding: 20,
+                  background: activePlayer === p.id ? '#22c55e' : '#e2e8f0',
+                  borderRadius: 16,
+                  border: activePlayer === p.id ? '4px solid #16a34a' : '2px solid transparent',
+                  boxShadow: activePlayer === p.id ? '0 0 25px rgba(34,197,94,0.7)' : 'none',
+                  transform: activePlayer === p.id ? 'scale(1.05)' : 'scale(1)',
+                  transition: 'all 0.3s ease'
+                }}>
                 {avatar(p)}
                 <div>{p.name}</div>
-                <div>{scores[p.id]}</div>
+                <div style={{ fontSize: 40 }}>{scores[p.id]}</div>
                 <div>/ {targets[p.id]}</div>
               </div>
             ))}
           </div>
 
-          <div>{inputValue || 0}</div>
+          <div style={{ textAlign: 'center', fontSize: 30 }}>{inputValue || 0}</div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
             {[1,2,3,4,5,6,7,8,9].map(n => (
-              <button key={n} onClick={() => addDigit(n.toString())}
-                style={{ height: 80, fontSize: 24, borderRadius: 12, border: 'none', background: '#ffffff' }}>
-                {n}
-              </button>
+              <button key={n} onClick={() => addDigit(n.toString())} style={{ height: 80, fontSize: 24 }}>{n}</button>
             ))}
-            <button onClick={clearInput}
-              style={{ height: 80, fontSize: 20, borderRadius: 12, border: 'none', background: '#facc15' }}>
-              C
-            </button>
-            <button onClick={() => addDigit('0')}
-              style={{ height: 80, fontSize: 24, borderRadius: 12, border: 'none', background: '#ffffff' }}>
-              0
-            </button>
-            <button onClick={submitScore}
-              style={{ height: 80, fontSize: 20, borderRadius: 12, border: 'none', background: '#22c55e', color: 'white' }}>
-              OK
-            </button>
+            <button onClick={clearInput} style={{ height: 80, background: '#facc15' }}>C</button>
+            <button onClick={() => addDigit('0')} style={{ height: 80 }}>0</button>
+            <button onClick={submitScore} style={{ height: 80, background: '#22c55e', color: 'white' }}>OK</button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginTop: 12 }}>
-          <button onClick={undo}
-            style={{ height: 80, fontSize: 18, borderRadius: 12, border: 'none', background: '#ef4444', color: 'white' }}>
-            Undo
-          </button>
-          <button onClick={nextTurn}
-            style={{ height: 80, fontSize: 18, borderRadius: 12, border: 'none', background: '#3b82f6', color: 'white' }}>
-            Beurt
-          </button>
-          <button onClick={newMatch}
-            style={{ height: 80, fontSize: 18, borderRadius: 12, border: 'none', background: '#6b7280', color: 'white' }}>
-            New
-          </button>
-        </div>
+            <button onClick={undo} style={{ height: 80, background: '#ef4444', color: 'white' }}>Undo</button>
+            <button onClick={nextTurn} style={{ height: 80, background: '#3b82f6', color: 'white' }}>Beurt</button>
+            <button onClick={newMatch} style={{ height: 80, background: '#6b7280', color: 'white' }}>New</button>
+          </div>
         </div>
       )}
 
