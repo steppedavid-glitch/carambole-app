@@ -135,7 +135,21 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', padding: 20, background: 'var(--bg)', color: 'var(--text)', ...theme }}>
 
-      <h1 style={{ textAlign: 'center' }}>🎱 Carambole Pro John Steppe</h1>
+      <div style={{ textAlign: 'center', marginBottom: 20 }}>
+        <h1 style={{
+          fontSize: 28,
+          fontWeight: '800',
+          letterSpacing: 1,
+          background: 'linear-gradient(90deg,#2563eb,#22c55e)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent'
+        }}>
+          🎱 Carambole Pro John Steppe
+        </h1>
+        <div style={{ fontSize: 14, opacity: 0.7 }}>
+          Live scoring • Stats • Performance
+        </div>
+      </div>
 
       <div style={{ textAlign: 'center', marginBottom: 10 }}>
         <Button onClick={() => setDarkMode(!darkMode)} style={{ background: '#6366f1', color: 'white' }}>
@@ -219,17 +233,17 @@ export default function App() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
             {[1,2,3,4,5,6,7,8,9].map(n => (
-              <Button key={n} onClick={() => addDigit(n.toString())} style={{ fontSize: 24, padding: 25 }}>{n}</Button>
+              <Button key={n} onClick={() => addDigit(n.toString())} style={{ fontSize: 24, padding: 28, height: 80 }}>{n}</Button>
             ))}
-            <Button onClick={clearInput} style={{ background: '#facc15' }}>C</Button>
-            <Button onClick={() => addDigit('0')}>0</Button>
-            <Button onClick={submitScore} style={{ background: '#22c55e', color: 'white' }}>OK</Button>
+            <Button onClick={clearInput} style={{ fontSize: 20, padding: 28, height: 80, background: '#facc15' }}>C</Button>
+            <Button onClick={() => addDigit('0')} style={{ fontSize: 24, padding: 28, height: 80 }}>0</Button>
+            <Button onClick={submitScore} style={{ fontSize: 20, padding: 28, height: 80, background: '#22c55e', color: 'white' }}>OK</Button>
           </div>
 
-          <div style={{ display: 'flex', gap: 12, marginTop: 15 }}>
-            <Button onClick={undo} style={{ flex: 1, background: '#ef4444', color: 'white' }}>Undo</Button>
-            <Button onClick={nextTurn} style={{ flex: 1, background: '#3b82f6', color: 'white' }}>Beurt</Button>
-            <Button onClick={newMatch} style={{ flex: 1, background: '#6b7280', color: 'white' }}>New</Button>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginTop: 15 }}>
+            <Button onClick={undo} style={{ height: 80, background: '#ef4444', color: 'white' }}>Undo</Button>
+            <Button onClick={nextTurn} style={{ height: 80, background: '#3b82f6', color: 'white' }}>Beurt</Button>
+            <Button onClick={newMatch} style={{ height: 80, background: '#6b7280', color: 'white' }}>New</Button>
           </div>
         </Card>
       )}
