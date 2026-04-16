@@ -214,7 +214,7 @@ export default function App() {
           display: "inline-block",
           boxShadow: "0 0 30px rgba(37,99,235,0.7)"
         }}>
-          🎱 Carambole Pro John Steppe
+          🎱 Carambole John, David, Bjarni & Friends
         </div>
       </div>
 
