@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 const Card = ({ children, style }) => (
-  <div style={{ background: "#fff", borderRadius: 16, padding: 16, boxShadow: "0 8px 24px rgba(0,0,0,0.08)", ...style }}>
+  <div style={{ background: "var(--card)", borderRadius: 16, padding: 16, boxShadow: "0 8px 24px rgba(0,0,0,0.08)", ...style }}>
     {children}
   </div>
 );
@@ -31,17 +31,22 @@ export default function App() {
   const [inputValue, setInputValue] = useState("");
   const [undoStack, setUndoStack] = useState([]);
 
+  const [darkMode, setDarkMode] = useState(() => JSON.parse(localStorage.getItem("darkMode")) || false);
+
   useEffect(() => localStorage.setItem("players", JSON.stringify(players)), [players]);
   useEffect(() => localStorage.setItem("games", JSON.stringify(games)), [games]);
+  useEffect(() => localStorage.setItem("darkMode", JSON.stringify(darkMode)), [darkMode]);
+
+  // CSS variables for theme
+  const theme = {
+    '--bg': darkMode ? '#0f172a' : '#f1f5f9',
+    '--card': darkMode ? '#1e293b' : '#ffffff',
+    '--text': darkMode ? '#e2e8f0' : '#0f172a'
+  };
 
   const addPlayer = () => {
     if (!newPlayer) return;
-    setPlayers([...players, {
-      name: newPlayer,
-      id: Date.now(),
-      color: ballColor,
-      photo
-    }]);
+    setPlayers([...players, { name: newPlayer, id: Date.now(), color: ballColor, photo }]);
     setNewPlayer("");
     setPhoto(null);
   };
@@ -67,6 +72,11 @@ export default function App() {
   const addDigit = (d) => setInputValue(prev => prev + d);
   const clearInput = () => setInputValue("");
 
+  const playSound = () => {
+    const audio = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
+    audio.play();
+  };
+
   const submitScore = () => {
     setUndoStack(prev => [...prev, { scores: { ...scores }, history: [...history], turns, activePlayer }]);
 
@@ -80,6 +90,7 @@ export default function App() {
       ...Object.fromEntries(selected.map(p => [p.name, newScores[p.id]]))
     }]);
 
+    playSound();
     setInputValue("");
 
     const next = selected.find(p => p.id !== activePlayer)?.id;
@@ -114,9 +125,23 @@ export default function App() {
     setUndoStack([]);
   };
 
+  const avatar = (p) => (
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      <img src={p.photo} alt="" width={60} height={60} style={{ borderRadius: '50%', objectFit: 'cover', border: '3px solid white' }} />
+      <div style={{ position: 'absolute', bottom: 0, right: 0, width: 18, height: 18, borderRadius: '50%', background: p.color === 'yellow' ? '#facc15' : '#ffffff', border: '2px solid #000' }} />
+    </div>
+  );
+
   return (
-    <div style={{ minHeight: "100vh", background: "#f1f5f9", padding: 20 }}>
-      <h1 style={{ textAlign: "center" }}>🎱 Carambole Pro John Steppe</h1>
+    <div style={{ minHeight: '100vh', padding: 20, background: 'var(--bg)', color: 'var(--text)', ...theme }}>
+
+      <h1 style={{ textAlign: 'center' }}>🎱 Carambole John & David Steppe</h1>
+
+      <div style={{ textAlign: 'center', marginBottom: 10 }}>
+        <Button onClick={() => setDarkMode(!darkMode)} style={{ background: '#6366f1', color: 'white' }}>
+          🌙 Toggle Dark Mode
+        </Button>
+      </div>
 
       {!currentGame && (
         <>
@@ -136,17 +161,11 @@ export default function App() {
             {players.map(p => (
               <div key={p.id} style={{ marginBottom: 10 }}>
                 <Button onClick={() => setSelected(prev => prev.find(x => x.id === p.id) ? prev.filter(x => x.id !== p.id) : [...prev, p])}>
-                  {p.photo && <img src={p.photo} alt="" width={30} style={{ borderRadius: "50%", marginRight: 10 }} />}
-                  {p.name}
+                  {p.photo && avatar(p)} {p.name}
                 </Button>
 
                 {selected.find(x => x.id === p.id) && (
-                  <input
-                    type="number"
-                    placeholder="target"
-                    value={targets[p.id] || ""}
-                    onChange={e => setTargets({ ...targets, [p.id]: Number(e.target.value) })}
-                  />
+                  <input type="number" placeholder="target" value={targets[p.id] || ''} onChange={e => setTargets({ ...targets, [p.id]: Number(e.target.value) })} />
                 )}
               </div>
             ))}
@@ -160,10 +179,17 @@ export default function App() {
 
       {currentGame && (
         <Card>
-          <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10 }}>
             {selected.map(p => (
-              <div key={p.id} style={{ flex: 1, textAlign: "center", padding: 20, background: activePlayer === p.id ? "#22c55e" : "#e2e8f0" }}>
-                {p.photo && <img src={p.photo} alt="" width={60} style={{ borderRadius: "50%" }} />}
+              <div key={p.id} style={{ flex: 1, textAlign: 'center', padding: 20,
+                background: activePlayer === p.id ? '#22c55e' : '#e2e8f0',
+                borderRadius: 12,
+                border: activePlayer === p.id ? '3px solid #16a34a' : '2px solid transparent',
+                boxShadow: activePlayer === p.id ? '0 0 25px rgba(34,197,94,0.7)' : 'none',
+                transition: 'all 0.35s ease',
+                transform: activePlayer === p.id ? 'scale(1.03)' : 'scale(1)'
+              }}>
+                {p.photo && avatar(p)}
                 <div>{p.name}</div>
                 <div style={{ fontSize: 40 }}>{scores[p.id]}</div>
                 <div>/ {targets[p.id]}</div>
@@ -171,24 +197,25 @@ export default function App() {
             ))}
           </div>
 
-          <div style={{ textAlign: "center" }}>{inputValue || 0}</div>
+          <div style={{ textAlign: 'center', fontSize: 30 }}>{inputValue || 0}</div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
             {[1,2,3,4,5,6,7,8,9].map(n => (
-              <Button key={n} onClick={() => addDigit(n.toString())}>{n}</Button>
+              <Button key={n} onClick={() => addDigit(n.toString())} style={{ fontSize: 24, padding: 25 }}>{n}</Button>
             ))}
-            <Button onClick={clearInput}>C</Button>
-            <Button onClick={() => addDigit("0")}>0</Button>
-            <Button onClick={submitScore}>OK</Button>
+            <Button onClick={clearInput} style={{ background: '#facc15' }}>C</Button>
+            <Button onClick={() => addDigit('0')}>0</Button>
+            <Button onClick={submitScore} style={{ background: '#22c55e', color: 'white' }}>OK</Button>
           </div>
 
-          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-            <Button onClick={undo}>Undo</Button>
-            <Button onClick={nextTurn}>Volgende beurt</Button>
-            <Button onClick={newMatch}>Nieuwe match</Button>
+          <div style={{ display: 'flex', gap: 12, marginTop: 15 }}>
+            <Button onClick={undo} style={{ flex: 1, background: '#ef4444', color: 'white' }}>Undo</Button>
+            <Button onClick={nextTurn} style={{ flex: 1, background: '#3b82f6', color: 'white' }}>Beurt</Button>
+            <Button onClick={newMatch} style={{ flex: 1, background: '#6b7280', color: 'white' }}>New</Button>
           </div>
         </Card>
       )}
+
     </div>
   );
 }
