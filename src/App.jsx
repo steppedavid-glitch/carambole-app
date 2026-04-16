@@ -6,6 +6,7 @@ export default function App() {
 
   const [newPlayer, setNewPlayer] = useState("");
   const [photo, setPhoto] = useState(null);
+  const [photoKey, setPhotoKey] = useState(0);
 
   const [selected, setSelected] = useState([]);
   const [scores, setScores] = useState({});
@@ -20,7 +21,6 @@ export default function App() {
   useEffect(() => localStorage.setItem("players", JSON.stringify(players)), [players]);
   useEffect(() => localStorage.setItem("games", JSON.stringify(games)), [games]);
 
-  // FOTO NIEUW
   const handlePhoto = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -28,46 +28,35 @@ export default function App() {
     const reader = new FileReader();
     reader.onload = () => setPhoto(reader.result);
     reader.readAsDataURL(file);
-
-    e.target.value = "";
   };
 
-  // FOTO UPDATE (FIXED)
   const updatePlayerPhoto = (id, e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = () => {
-      setPlayers(prev =>
-        prev.map(p =>
-          p.id === id ? { ...p, photo: reader.result } : p
-        )
-      );
+      setPlayers(prev => prev.map(p => p.id === id ? { ...p, photo: reader.result } : p));
     };
 
     reader.readAsDataURL(file);
-    e.target.value = ""; // 🔥 cruciaal
+    e.target.value = "";
   };
 
-  // SPELER TOEVOEGEN (FIXED)
   const addPlayer = () => {
     if (!newPlayer.trim()) return;
 
-    setPlayers(prev => [
-      ...prev,
-      {
-        id: Date.now(),
-        name: newPlayer,
-        photo: photo || null
-      }
-    ]);
+    const newP = {
+      id: crypto.randomUUID(),
+      name: newPlayer.trim(),
+      photo: photo || null
+    };
+
+    setPlayers(prev => [...prev, newP]);
 
     setNewPlayer("");
     setPhoto(null);
-
-    const input = document.getElementById("photoInput");
-    if (input) input.value = "";
+    setPhotoKey(prev => prev + 1);
   };
 
   const startGame = () => {
@@ -81,7 +70,6 @@ export default function App() {
     setCurrentGame(true);
   };
 
-  // 🔥 SUPER STABIELE WIN LOGIC
   const submitScore = () => {
     const val = Number(inputValue || 0);
 
@@ -100,21 +88,11 @@ export default function App() {
 
     const newHistory = [...history, { player: activePlayer, value: val }];
 
-    // 🔥 eerst alles berekenen
-    const win = selected.find(
-      p => targets[p.id] && newScores[p.id] >= targets[p.id]
-    );
+    const win = selected.find(p => targets[p.id] && newScores[p.id] >= targets[p.id]);
 
     if (win) {
-      const game = {
-        players: selected,
-        winner: win
-      };
+      setGames(prev => [...prev, { players: selected, winner: win }]);
 
-      // 🔥 eerst opslaan
-      setGames(prev => [...prev, game]);
-
-      // 🔥 dan reset (geen timing bugs)
       setCurrentGame(false);
       setSelected([]);
       setScores({});
@@ -123,11 +101,9 @@ export default function App() {
       setTargets({});
       setActivePlayer(null);
       setInputValue("");
-
       return;
     }
 
-    // normaal verloop
     setScores(newScores);
     setHistory(newHistory);
     setInputValue("");
@@ -155,83 +131,87 @@ export default function App() {
   const avatar = (p) => (
     <label style={{ cursor: "pointer" }}>
       {p.photo ? (
-        <img src={p.photo} style={{ width: 50, height: 50, borderRadius: "50%" }} />
+        <img src={p.photo} style={{ width: 60, height: 60, borderRadius: "50%" }} />
       ) : (
-        <div style={{
-          width: 50,
-          height: 50,
-          borderRadius: "50%",
-          background: "#e2e8f0",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        }}>
-          +
-        </div>
+        <div style={{ width: 60, height: 60, borderRadius: "50%", background: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>+</div>
       )}
-      <input
-        type="file"
-        style={{ display: "none" }}
-        onChange={(e) => updatePlayerPhoto(p.id, e)}
-      />
+      <input type="file" style={{ display: "none" }} onChange={(e) => updatePlayerPhoto(p.id, e)} />
     </label>
   );
 
-  const btn = {
-    height: 80,
-    fontSize: 32,
-    borderRadius: 12
+  const bigBtn = {
+    padding: 14,
+    fontSize: 18,
+    borderRadius: 12,
+    marginTop: 8
   };
 
   return (
     <div style={{ padding: 20, background: "#f1f5f9" }}>
 
-      <h1 style={{ textAlign: "center" }}>🎱 Carambole Pro John Steppe</h1>
+      <div style={{ textAlign: "center", marginBottom: 20 }}>
+        <div style={{
+          display: "inline-block",
+          padding: "16px 30px",
+          borderRadius: 20,
+          background: "linear-gradient(135deg,#2563eb,#22c55e)",
+          color: "white",
+          fontSize: 32,
+          fontWeight: "800"
+        }}>
+          🎱 Carambole Pro John Steppe
+        </div>
+      </div>
 
       {!currentGame && (
         <div>
-          <h3>Spelers</h3>
 
+          <h2 style={{ fontSize: 24 }}>Spelers</h2>
           {players.map(p => (
-            <div key={p.id} style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <div key={p.id} style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
               {avatar(p)}
-              <div>{p.name}</div>
-              <div>🏆 {stats(p)}</div>
+              <div style={{ fontSize: 20, fontWeight: 600 }}>{p.name}</div>
+              <div style={{ fontSize: 18 }}>🏆 {stats(p)}</div>
             </div>
           ))}
 
-          <h3>Toevoegen</h3>
-          <input value={newPlayer} onChange={e => setNewPlayer(e.target.value)} />
-          <input id="photoInput" type="file" onChange={handlePhoto} />
-          <button onClick={addPlayer}>Add</button>
+          <h2 style={{ fontSize: 24 }}>Toevoegen</h2>
+          <input style={{ fontSize: 18, padding: 8 }} value={newPlayer} onChange={e => setNewPlayer(e.target.value)} />
+          <input key={photoKey} type="file" onChange={handlePhoto} />
+          <br />
+          <button style={{ ...bigBtn, background: "#22c55e", color: "white" }} onClick={addPlayer}>Toevoegen</button>
 
-          <h3>Selecteer spelers</h3>
+          <h2 style={{ fontSize: 24 }}>Selecteer spelers</h2>
           {players.map(p => (
             <div key={p.id}>
-              <button onClick={() =>
-                setSelected(prev =>
+              <button
+                style={{ ...bigBtn, width: "100%", background: selected.find(x=>x.id===p.id)?"#22c55e":"white" }}
+                onClick={() => setSelected(prev =>
                   prev.find(x => x.id === p.id)
                     ? prev.filter(x => x.id !== p.id)
                     : [...prev, p]
-                )
-              }>
+                )}
+              >
                 {p.name}
               </button>
 
               {selected.find(x => x.id === p.id) && (
                 <input
+                  style={{ fontSize: 18, padding: 6 }}
                   type="number"
                   placeholder="target"
                   value={targets[p.id] || ""}
-                  onChange={e =>
-                    setTargets({ ...targets, [p.id]: Number(e.target.value) })
-                  }
+                  onChange={e => setTargets({ ...targets, [p.id]: Number(e.target.value) })}
                 />
               )}
             </div>
           ))}
 
-          {selected.length >= 2 && <button onClick={startGame}>Start</button>}
+          {selected.length >= 2 && (
+            <button style={{ ...bigBtn, background: "#2563eb", color: "white" }} onClick={startGame}>
+              Start match
+            </button>
+          )}
         </div>
       )}
 
@@ -240,12 +220,7 @@ export default function App() {
 
           <div style={{ display: "flex", gap: 10 }}>
             {selected.map(p => (
-              <div key={p.id} style={{
-                flex: 1,
-                padding: 10,
-                background: activePlayer === p.id ? "#22c55e" : "#e2e8f0",
-                borderRadius: 12
-              }}>
+              <div key={p.id} style={{ flex: 1, padding: 10, background: activePlayer === p.id ? "#22c55e" : "#e2e8f0", borderRadius: 12 }}>
                 {avatar(p)}
                 <div>{p.name}</div>
                 <div style={{ fontSize: 40 }}>{scores[p.id]}</div>
@@ -263,21 +238,22 @@ export default function App() {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
             {[1,2,3,4,5,6,7,8,9].map(n => (
-              <button key={n} style={btn} onClick={() => setInputValue(v => v + n)}>{n}</button>
+              <button key={n} style={{ height: 80, fontSize: 32 }} onClick={() => setInputValue(v => v + n)}>{n}</button>
             ))}
-            <button style={{ ...btn, background: "#facc15" }} onClick={()=>setInputValue("")}>C</button>
-            <button style={btn} onClick={()=>setInputValue(v=>v+"0")}>0</button>
-            <button style={{ ...btn, background: "#22c55e", color: "white" }} onClick={submitScore}>OK</button>
+            <button style={{ height:80, fontSize:32, background:"#facc15" }} onClick={()=>setInputValue("")}>C</button>
+            <button style={{ height:80, fontSize:32 }} onClick={()=>setInputValue(v=>v+"0")}>0</button>
+            <button style={{ height:80, fontSize:32, background:"#22c55e", color:"white" }} onClick={submitScore}>OK</button>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
-            <button style={{ ...btn, background: "#ef4444", color: "white" }} onClick={undo}>Undo</button>
-            <button style={{ ...btn, background: "#3b82f6", color: "white" }} onClick={()=>setActivePlayer(selected.find(p=>p.id!==activePlayer)?.id)}>Beurt</button>
-            <button style={{ ...btn, background: "#6b7280", color: "white" }} onClick={()=>setCurrentGame(false)}>New</button>
+            <button style={{ height:80, background:"#ef4444", color:"white" }} onClick={undo}>Undo</button>
+            <button style={{ height:80, background:"#3b82f6", color:"white" }} onClick={()=>setActivePlayer(selected.find(p=>p.id!==activePlayer)?.id)}>Beurt</button>
+            <button style={{ height:80, background:"#6b7280", color:"white" }} onClick={()=>setCurrentGame(false)}>New</button>
           </div>
 
         </div>
       )}
+
     </div>
   );
 }
