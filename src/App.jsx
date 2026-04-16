@@ -86,12 +86,26 @@ export default function App() {
   return (
     <div style={{ padding: 20, background: '#f1f5f9' }}>
 
-      <h1 style={{ textAlign: 'center' }}>🎱 Carambole Pro John Steppe</h1>
+      <div style={{ textAlign: 'center', marginBottom: 20 }}>
+        <div style={{
+          display: 'inline-block',
+          padding: '14px 28px',
+          borderRadius: 18,
+          background: 'linear-gradient(90deg,#2563eb,#22c55e)',
+          color: 'white',
+          fontSize: 30,
+          fontWeight: '800',
+          letterSpacing: 1,
+          boxShadow: '0 0 25px rgba(37,99,235,0.6)'
+        }}>
+          🎱 Carambole Pro John Steppe
+        </div>
+      </div>
 
       {!currentGame && (
         <div>
 
-          <h3>Spelers</h3>
+          <h3 style={{fontSize:22, marginTop:10}}>Spelers</h3>
           {players.map(p => (
             <div key={p.id}>
               {avatar(p)} {p.name}
@@ -99,12 +113,12 @@ export default function App() {
             </div>
           ))}
 
-          <h3>Speler toevoegen</h3>
+          <h3 style={{fontSize:22, marginTop:20}}>Speler toevoegen</h3>
           <input value={newPlayer} onChange={e => setNewPlayer(e.target.value)} />
           <input type="file" onChange={handlePhoto} />
-          <button onClick={addPlayer}>Toevoegen</button>
+          <button onClick={addPlayer} style={{marginTop:10, padding:10, borderRadius:10, background:'#22c55e', color:'white', border:'none', fontSize:16}}>Toevoegen</button>
 
-          <h3>Selecteer spelers</h3>
+          <h3 style={{fontSize:22, marginTop:20}}>Selecteer spelers</h3>
           {players.map(p => (
             <div key={p.id}>
               <button onClick={() => setSelected(prev => prev.find(x => x.id === p.id) ? prev.filter(x => x.id !== p.id) : [...prev, p])}>
