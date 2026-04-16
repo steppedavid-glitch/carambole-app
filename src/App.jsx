@@ -112,7 +112,7 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', padding: 20, background: '#f1f5f9' }}>
 
-      <h1 style={{ textAlign: 'center' }}>🎱 Carambole John & David Steppe</h1>
+      <h1 style={{ textAlign: 'center' }}>🎱 Carambole Pro John Steppe</h1>
 
       {/* WINNER */}
       {winner && (
@@ -180,18 +180,41 @@ export default function App() {
 
           <div>{inputValue || 0}</div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
             {[1,2,3,4,5,6,7,8,9].map(n => (
-              <button key={n} onClick={() => addDigit(n.toString())}>{n}</button>
+              <button key={n} onClick={() => addDigit(n.toString())}
+                style={{ height: 80, fontSize: 24, borderRadius: 12, border: 'none', background: '#ffffff' }}>
+                {n}
+              </button>
             ))}
-            <button onClick={clearInput}>C</button>
-            <button onClick={() => addDigit('0')}>0</button>
-            <button onClick={submitScore}>OK</button>
+            <button onClick={clearInput}
+              style={{ height: 80, fontSize: 20, borderRadius: 12, border: 'none', background: '#facc15' }}>
+              C
+            </button>
+            <button onClick={() => addDigit('0')}
+              style={{ height: 80, fontSize: 24, borderRadius: 12, border: 'none', background: '#ffffff' }}>
+              0
+            </button>
+            <button onClick={submitScore}
+              style={{ height: 80, fontSize: 20, borderRadius: 12, border: 'none', background: '#22c55e', color: 'white' }}>
+              OK
+            </button>
           </div>
 
-          <button onClick={undo}>Undo</button>
-          <button onClick={nextTurn}>Beurt</button>
-          <button onClick={newMatch}>New</button>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginTop: 12 }}>
+          <button onClick={undo}
+            style={{ height: 80, fontSize: 18, borderRadius: 12, border: 'none', background: '#ef4444', color: 'white' }}>
+            Undo
+          </button>
+          <button onClick={nextTurn}
+            style={{ height: 80, fontSize: 18, borderRadius: 12, border: 'none', background: '#3b82f6', color: 'white' }}>
+            Beurt
+          </button>
+          <button onClick={newMatch}
+            style={{ height: 80, fontSize: 18, borderRadius: 12, border: 'none', background: '#6b7280', color: 'white' }}>
+            New
+          </button>
+        </div>
         </div>
       )}
 
