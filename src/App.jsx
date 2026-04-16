@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function App() {
   const [players, setPlayers] = useState(() => JSON.parse(localStorage.getItem("players")) || []);
@@ -76,10 +77,8 @@ export default function App() {
         history: newHistory
       };
 
-      const updatedGames = [...games, game];
-      setGames(updatedGames);
+      setGames(prev => [...prev, game]);
 
-      // reset
       setCurrentGame(false);
       setSelected([]);
       setScores({});
@@ -97,26 +96,47 @@ export default function App() {
   const nextTurn = () => setTurns(turns + 1);
 
   const avatar = (p) => (
-    <div style={{ position: 'relative', display: 'inline-block' }}>
-      {p.photo && <img src={p.photo} alt="" width={50} height={50} style={{ borderRadius: '50%' }} />}
-      <div style={{ position: 'absolute', bottom: 0, right: 0, width: 14, height: 14, borderRadius: '50%', background: p.color === 'yellow' ? '#facc15' : '#ffffff', border: '2px solid #000' }} />
+    <div style={{ display: 'inline-block' }}>
+      {p.photo && <img src={p.photo} alt="" width={40} height={40} style={{ borderRadius: '50%' }} />}
     </div>
   );
 
   const stats = (p) => {
     const played = games.filter(g => g.players?.find(x => x.id === p.id));
     const wins = played.filter(g => g.winner && g.winner.id === p.id);
-    return { played: played.length, wins: wins.length };
+    const percentage = played.length ? Math.round((wins.length / played.length) * 100) : 0;
+    return { played: played.length, wins: wins.length, percentage };
   };
 
   const ranking = [...players]
     .map(p => ({ name: p.name, wins: stats(p).wins }))
     .sort((a, b) => b.wins - a.wins);
 
-  return (
-    <div style={{ minHeight: '100vh', padding: 20, background: '#f1f5f9' }}>
+  const bestOpponent = (p) => {
+    const opponents = players.filter(o => o.id !== p.id);
+    let best = null;
 
-      <h1 style={{ textAlign: 'center' }}>🎱 Carambole Pro John Steppe</h1>
+    opponents.forEach(o => {
+      const matches = games.filter(g =>
+        g.players.find(x => x.id === p.id) &&
+        g.players.find(x => x.id === o.id)
+      );
+
+      const wins = matches.filter(g => g.winner && g.winner.id === p.id).length;
+      const perc = matches.length ? wins / matches.length : 0;
+
+      if (!best || perc > best.perc) {
+        best = { name: o.name, perc };
+      }
+    });
+
+    return best;
+  };
+
+  return (
+    <div style={{ padding: 20, background: '#f1f5f9' }}>
+
+      <h1>🎱 Carambole Pro John Steppe</h1>
 
       {!currentGame && (
         <div>
@@ -124,9 +144,28 @@ export default function App() {
           <h3>Spelers</h3>
           {players.map(p => {
             const s = stats(p);
+            const best = bestOpponent(p);
+
             return (
-              <div key={p.id}>
-                {avatar(p)} {p.name} | 🎯 {s.played} | 🏆 {s.wins}
+              <div key={p.id} style={{ marginBottom: 10 }}>
+                {avatar(p)} {p.name}
+                | 🎯 {s.played}
+                | 🏆 {s.wins}
+                | 📊 {s.percentage}%
+                {best && <div>🔥 Beste tegen: {best.name} ({Math.round(best.perc * 100)}%)</div>}
+
+                {/* GRAFIEK */}
+                <ResponsiveContainer width="100%" height={100}>
+                  <LineChart data={games.map((g, i) => ({
+                    name: i + 1,
+                    win: g.winner?.id === p.id ? 1 : 0
+                  }))}>
+                    <XAxis dataKey="name" hide />
+                    <YAxis hide domain={[0,1]} />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="win" />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             );
           })}
@@ -149,7 +188,7 @@ export default function App() {
           {players.map(p => (
             <div key={p.id}>
               <button onClick={() => setSelected(prev => prev.find(x => x.id === p.id) ? prev.filter(x => x.id !== p.id) : [...prev, p])}>
-                {avatar(p)} {p.name}
+                {p.name}
               </button>
 
               {selected.find(x => x.id === p.id) && (
@@ -164,41 +203,27 @@ export default function App() {
 
       {currentGame && (
         <div>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex' }}>
             {selected.map(p => (
-              <div key={p.id} style={{
-                flex: 1,
-                textAlign: 'center',
-                padding: 20,
-                background: activePlayer === p.id ? '#22c55e' : '#e2e8f0',
-                borderRadius: 16,
-                border: activePlayer === p.id ? '4px solid #16a34a' : '2px solid transparent',
-                boxShadow: activePlayer === p.id ? '0 0 25px rgba(34,197,94,0.7)' : 'none'
-              }}>
-                {avatar(p)}
+              <div key={p.id} style={{ flex: 1, textAlign: 'center', background: activePlayer === p.id ? '#22c55e' : '#e2e8f0' }}>
                 <div>{p.name}</div>
                 <div style={{ fontSize: 40 }}>{scores[p.id]}</div>
-                <div>/ {targets[p.id]}</div>
               </div>
             ))}
           </div>
 
           <div style={{ textAlign: 'center', fontSize: 36 }}>{inputValue || 0}</div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)' }}>
             {[1,2,3,4,5,6,7,8,9].map(n => (
               <button key={n} onClick={() => addDigit(n.toString())} style={{ height: 80, fontSize: 32 }}>{n}</button>
             ))}
-            <button onClick={clearInput} style={{ height: 80, fontSize: 28, background: '#facc15' }}>C</button>
-            <button onClick={() => addDigit('0')} style={{ height: 80, fontSize: 32 }}>0</button>
-            <button onClick={submitScore} style={{ height: 80, fontSize: 28, background: '#22c55e', color: 'white' }}>OK</button>
+            <button onClick={clearInput}>C</button>
+            <button onClick={() => addDigit('0')}>0</button>
+            <button onClick={submitScore}>OK</button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginTop: 12 }}>
-            <button onClick={nextTurn} style={{ height: 80, background: '#3b82f6', color: 'white' }}>Beurt</button>
-            <button onClick={() => setCurrentGame(false)} style={{ height: 80, background: '#6b7280', color: 'white' }}>Stop</button>
-            <div></div>
-          </div>
+          <button onClick={nextTurn}>Beurt</button>
         </div>
       )}
 
