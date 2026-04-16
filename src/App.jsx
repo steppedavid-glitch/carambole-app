@@ -176,13 +176,36 @@ export default function App() {
 
           <h3>Selecteer spelers</h3>
           {players.map(p => (
-            <div key={p.id}>
+            <div key={p.id} style={{ marginBottom: 10 }}>
               <Button onClick={() => setSelected(prev => prev.find(x => x.id === p.id) ? prev.filter(x => x.id !== p.id) : [...prev, p])}>
                 {avatar(p)} {p.name}
               </Button>
 
+              {/* FOTO AANPASSEN */}
+              <div style={{ marginTop: 5 }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      setPlayers(prev => prev.map(pl =>
+                        pl.id === p.id ? { ...pl, photo: reader.result } : pl
+                      ));
+                    };
+                    if (file) reader.readAsDataURL(file);
+                  }}
+                />
+              </div>
+
               {selected.find(x => x.id === p.id) && (
-                <input type="number" placeholder="target" value={targets[p.id] || ''} onChange={e => setTargets({ ...targets, [p.id]: Number(e.target.value) })} />
+                <input
+                  type="number"
+                  placeholder="target"
+                  value={targets[p.id] || ''}
+                  onChange={e => setTargets({ ...targets, [p.id]: Number(e.target.value) })}
+                />
               )}
             </div>
           ))}
