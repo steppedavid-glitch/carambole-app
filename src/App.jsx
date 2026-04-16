@@ -16,7 +16,6 @@ export default function App() {
   const [currentGame, setCurrentGame] = useState(false);
   const [activePlayer, setActivePlayer] = useState(null);
   const [inputValue, setInputValue] = useState("");
-  const [undoStack, setUndoStack] = useState([]);
 
   useEffect(() => localStorage.setItem("players", JSON.stringify(players)), [players]);
   useEffect(() => localStorage.setItem("games", JSON.stringify(games)), [games]);
@@ -43,7 +42,6 @@ export default function App() {
     setTurns(1);
     setCurrentGame(true);
     setActivePlayer(selected[0].id);
-    setUndoStack([]);
   };
 
   const addDigit = (d) => setInputValue(prev => prev + d);
@@ -66,8 +64,9 @@ export default function App() {
     setHistory(newHistory);
     setInputValue("");
 
-    // ✅ WIN CHECK (FIXED)
-    const win = selected.find(p => newScores[p.id] >= (targets[p.id] || 0));
+    const win = selected.find(p =>
+      targets[p.id] && newScores[p.id] >= targets[p.id]
+    );
 
     if (win) {
       const game = {
@@ -77,34 +76,22 @@ export default function App() {
         history: newHistory
       };
 
-      // 🔥 BELANGRIJK: direct opslaan
       const updatedGames = [...games, game];
       setGames(updatedGames);
 
-      // 🔥 RESET NA MATCH
+      // reset
       setCurrentGame(false);
       setSelected([]);
       setScores({});
       setHistory([]);
       setTurns(1);
       setInputValue("");
-      setUndoStack([]);
 
       return;
     }
 
     const next = selected.find(p => p.id !== activePlayer)?.id;
     setActivePlayer(next);
-  };
-
-  const undo = () => {
-    const last = undoStack.pop();
-    if (!last) return;
-    setScores(last.scores);
-    setHistory(last.history);
-    setTurns(last.turns);
-    setActivePlayer(last.activePlayer);
-    setUndoStack([...undoStack]);
   };
 
   const nextTurn = () => setTurns(turns + 1);
@@ -116,10 +103,9 @@ export default function App() {
     </div>
   );
 
-  // STATS
   const stats = (p) => {
-    const played = games.filter(g => g.players.find(x => x.id === p.id));
-    const wins = played.filter(g => g.winner.id === p.id);
+    const played = games.filter(g => g.players?.find(x => x.id === p.id));
+    const wins = played.filter(g => g.winner && g.winner.id === p.id);
     return { played: played.length, wins: wins.length };
   };
 
@@ -209,9 +195,9 @@ export default function App() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginTop: 12 }}>
-            <button onClick={undo} style={{ height: 80, background: '#ef4444', color: 'white' }}>Undo</button>
             <button onClick={nextTurn} style={{ height: 80, background: '#3b82f6', color: 'white' }}>Beurt</button>
             <button onClick={() => setCurrentGame(false)} style={{ height: 80, background: '#6b7280', color: 'white' }}>Stop</button>
+            <div></div>
           </div>
         </div>
       )}
