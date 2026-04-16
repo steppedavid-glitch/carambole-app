@@ -112,7 +112,7 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', padding: 20, background: '#f1f5f9' }}>
 
-      <h1 style={{ textAlign: 'center' }}>🎱 Carambole Pro John Steppe</h1>
+      <h1 style={{ textAlign: 'center' }}>🎱 Carambole John & David Steppe</h1>
 
       {/* WINNER */}
       {winner && (
