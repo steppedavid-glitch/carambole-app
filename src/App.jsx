@@ -125,7 +125,6 @@ export default function App() {
     setUndoStack([...undoStack]);
   };
 
-  // 🔥 ELITE STATS
   const getAdvancedStats = (player) => {
 
     const playedGames = games.filter(g =>
@@ -204,13 +203,16 @@ export default function App() {
       color: "white"
     }}>
 
-      <div style={{ textAlign: "center", marginBottom: 20 }}>
+      {/* HEADER */}
+      <div style={{ textAlign: "center", marginBottom: 30 }}>
         <div style={{
-          padding: "16px 30px",
+          padding: "18px 36px",
           borderRadius: 20,
           background: "linear-gradient(135deg,#2563eb,#22c55e)",
-          fontSize: 28,
-          fontWeight: "800"
+          fontSize: 32,
+          fontWeight: "800",
+          display: "inline-block",
+          boxShadow: "0 0 30px rgba(37,99,235,0.7)"
         }}>
           🎱 Carambole Pro John Steppe
         </div>
@@ -220,31 +222,90 @@ export default function App() {
         <div>
 
           {/* ADD */}
-          <div style={{ background: "#1e293b", padding: 15, borderRadius: 16 }}>
-            <input value={name} onChange={e => setName(e.target.value)} />
+          <div style={{
+            background: "#1e293b",
+            padding: 20,
+            borderRadius: 18,
+            marginBottom: 25,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.4)"
+          }}>
+            <input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Naam speler"
+              style={{ padding: 12, fontSize: 16, marginRight: 10 }}
+            />
+
             <input key={photoKey} type="file" onChange={handlePhoto} />
-            <button onClick={addPlayer}>➕</button>
+
+            <button onClick={addPlayer} style={{
+              marginLeft: 10,
+              padding: "10px 16px",
+              background: "#22c55e",
+              borderRadius: 10,
+              color: "white",
+              fontWeight: "bold"
+            }}>
+              ➕ Toevoegen
+            </button>
           </div>
 
           {/* PLAYERS */}
           {players.map(p => (
-            <div key={p.id} style={{ display: "flex", gap: 10, marginTop: 10 }}>
+            <div key={p.id} style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 14,
+              padding: 14,
+              marginBottom: 12,
+              background: "#1e293b",
+              borderRadius: 16,
+              boxShadow: "0 2px 10px rgba(0,0,0,0.3)"
+            }}>
+
               <label>
                 {p.photo ? (
-                  <img src={p.photo} style={{ width: 50, height: 50, borderRadius: "50%" }} />
+                  <img src={p.photo} style={{
+                    width: 70,
+                    height: 70,
+                    borderRadius: "50%",
+                    border: "3px solid #22c55e"
+                  }} />
                 ) : (
-                  <div style={{ width: 50, height: 50, background: "#334155", borderRadius: "50%" }}>+</div>
+                  <div style={{
+                    width: 70,
+                    height: 70,
+                    borderRadius: "50%",
+                    background: "#334155",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 24
+                  }}>+</div>
                 )}
+
                 <input type="file" hidden onChange={(e) => updatePhoto(p.id, e)} />
               </label>
 
-              <button onClick={() =>
-                setSelected(prev =>
-                  prev.find(x => x.id === p.id)
-                    ? prev.filter(x => x.id !== p.id)
-                    : [...prev, p]
-                )
-              }>
+              <button
+                onClick={() =>
+                  setSelected(prev =>
+                    prev.find(x => x.id === p.id)
+                      ? prev.filter(x => x.id !== p.id)
+                      : [...prev, p]
+                  )
+                }
+                style={{
+                  flex: 1,
+                  padding: 12,
+                  borderRadius: 12,
+                  fontSize: 18,
+                  background: selected.find(x => x.id === p.id)
+                    ? "#22c55e"
+                    : "#334155",
+                  color: "white"
+                }}
+              >
                 {p.name}
               </button>
 
@@ -252,6 +313,7 @@ export default function App() {
                 <input
                   type="number"
                   placeholder="🎯"
+                  style={{ width: 70, padding: 8 }}
                   onChange={e =>
                     setTargets({ ...targets, [p.id]: Number(e.target.value) })
                   }
@@ -261,35 +323,38 @@ export default function App() {
           ))}
 
           {selected.length >= 2 && (
-            <button onClick={startGame}>Start match</button>
+            <button onClick={startGame} style={{
+              width: "100%",
+              padding: 18,
+              background: "#2563eb",
+              borderRadius: 16,
+              fontSize: 20,
+              fontWeight: "bold"
+            }}>
+              ▶️ Start match
+            </button>
           )}
 
-          {/* 🏆 ELITE RANKING */}
-          <h2 style={{ marginTop: 20 }}>🏆 Elite Ranking</h2>
+          {/* ELITE RANKING */}
+          <h2 style={{ marginTop: 30 }}>🏆 Elite Ranking</h2>
 
           {ranking.map((p, i) => {
             const s = getAdvancedStats(p);
 
             return (
               <div key={p.id} style={{
-                padding: 14,
-                marginBottom: 10,
+                padding: 16,
+                marginBottom: 12,
                 background: "#1e293b",
-                borderRadius: 14
+                borderRadius: 16
               }}>
-                <div><b>{i + 1}. {p.name}</b></div>
+                <div style={{ fontSize: 18 }}>
+                  <b>{i + 1}. {p.name}</b>
+                </div>
                 <div>🏆 {s.wins}/{s.played} ({s.winRate}%)</div>
                 <div>🎯 Moyenne: {s.moyenne}</div>
                 <div>🔥 Beste serie: {s.bestSeries}</div>
                 <div>🥇 Beste tegenstander: {s.bestOpponent}</div>
-
-                <div style={{ fontSize: 13 }}>
-                  {Object.entries(s.vs).map(([name, stat]) => (
-                    <div key={name}>
-                      vs {name}: {stat.wins}/{stat.played}
-                    </div>
-                  ))}
-                </div>
               </div>
             );
           })}
@@ -305,7 +370,8 @@ export default function App() {
                 flex: 1,
                 padding: 16,
                 borderRadius: 16,
-                background: active === p.id ? "#22c55e" : "#1e293b"
+                background: active === p.id ? "#22c55e" : "#1e293b",
+                boxShadow: active === p.id ? "0 0 20px #22c55e" : "none"
               }}>
                 {p.name}
                 <div style={{ fontSize: 48 }}>{scores[p.id]}</div>
@@ -319,7 +385,7 @@ export default function App() {
             ))}
           </div>
 
-          <div style={{ textAlign: "center", fontSize: 48 }}>
+          <div style={{ textAlign: "center", fontSize: 48, margin: 20 }}>
             {input || 0}
           </div>
 
