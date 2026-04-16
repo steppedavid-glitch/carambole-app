@@ -154,15 +154,15 @@ export default function App() {
             {[1,2,3,4,5,6,7,8,9].map(n => (
               <button key={n} onClick={() => setInputValue(v=>v+n)} style={{ height: 80, fontSize: 32 }}>{n}</button>
             ))}
-            <button style={{ height:80, background:'#facc15' }} onClick={()=>setInputValue('')}>C</button>
-            <button style={{ height:80 }} onClick={()=>setInputValue(v=>v+'0')}>0</button>
-            <button style={{ height:80, background:'#22c55e', color:'white' }} onClick={submitScore}>OK</button>
+            <button style={{ height:80, fontSize:32, borderRadius:12, background:'#facc15' }} onClick={()=>setInputValue('')}>C</button>
+            <button style={{ height:80, fontSize:32, borderRadius:12 }} onClick={()=>setInputValue(v=>v+'0')}>0</button>
+            <button style={{ height:80, fontSize:32, borderRadius:12, background:'#22c55e', color:'white' }} onClick={submitScore}>OK</button>
           </div>
 
           <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginTop:10 }}>
-            <button style={{ height:80, background:'#ef4444', color:'white' }} onClick={undo}>Undo</button>
-            <button style={{ height:80, background:'#3b82f6', color:'white' }} onClick={()=>setActivePlayer(selected.find(p=>p.id!==activePlayer)?.id)}>Beurt</button>
-            <button style={{ height:80, background:'#6b7280', color:'white' }} onClick={()=>setCurrentGame(false)}>New</button>
+            <button style={{ height:80, fontSize:32, borderRadius:12, background:'#ef4444', color:'white' }} onClick={undo}>Undo</button>
+            <button style={{ height:80, fontSize:32, borderRadius:12, background:'#3b82f6', color:'white' }} onClick={()=>setActivePlayer(selected.find(p=>p.id!==activePlayer)?.id)}>Beurt</button>
+            <button style={{ height:80, fontSize:32, borderRadius:12, background:'#6b7280', color:'white' }} onClick={()=>setCurrentGame(false)}>New</button>
           </div>
 
         </div>
