@@ -121,7 +121,7 @@ export default function App() {
             border: "2px solid rgba(255,255,255,0.2)"
           }}
         >
-          🎱 Carambole Pro John Steppe
+          🎱 Carambole John, David, Bjarni & Friends
         </div>
       </div>
 
