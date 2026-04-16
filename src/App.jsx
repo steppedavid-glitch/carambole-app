@@ -17,6 +17,9 @@ export default function App() {
   const [players, setPlayers] = useState(() => JSON.parse(localStorage.getItem("players")) || []);
   const [games, setGames] = useState(() => JSON.parse(localStorage.getItem("games")) || []);
 
+  const [newPlayer, setNewPlayer] = useState("");
+  const [ballColor, setBallColor] = useState("white");
+
   const [selected, setSelected] = useState([]);
   const [scores, setScores] = useState({});
   const [history, setHistory] = useState([]);
@@ -26,7 +29,17 @@ export default function App() {
   const [activePlayer, setActivePlayer] = useState(null);
   const [inputValue, setInputValue] = useState("");
 
+  // NEW: undo stack
+  const [undoStack, setUndoStack] = useState([]);
+
   useEffect(() => localStorage.setItem("games", JSON.stringify(games)), [games]);
+  useEffect(() => localStorage.setItem("players", JSON.stringify(players)), [players]);
+
+  const addPlayer = () => {
+    if (!newPlayer) return;
+    setPlayers([...players, { name: newPlayer, id: Date.now(), color: ballColor }]);
+    setNewPlayer("");
+  };
 
   const startGame = () => {
     const initScores = {};
@@ -36,12 +49,23 @@ export default function App() {
     setTurns(1);
     setCurrentGame(true);
     setActivePlayer(selected[0].id);
+    setUndoStack([]);
   };
 
   const addDigit = (d) => setInputValue(prev => prev + d);
   const clearInput = () => setInputValue("");
 
   const submitScore = () => {
+    if (!activePlayer) return;
+
+    // save snapshot for undo
+    setUndoStack(prev => [...prev, {
+      scores: { ...scores },
+      history: [...history],
+      turns,
+      activePlayer
+    }]);
+
     const val = Number(inputValue || 0);
     const newScores = { ...scores, [activePlayer]: scores[activePlayer] + val };
 
@@ -58,7 +82,6 @@ export default function App() {
     const next = selected.find(p => p.id !== activePlayer)?.id;
     setActivePlayer(next);
 
-    // check winner
     const win = selected.find(p => newScores[p.id] >= targets[p.id]);
     if (win) {
       setGames([...games, { players: selected, scores: newScores, winner: win, history }]);
@@ -66,15 +89,35 @@ export default function App() {
     }
   };
 
+  const undo = () => {
+    const last = undoStack[undoStack.length - 1];
+    if (!last) return;
+
+    setScores(last.scores);
+    setHistory(last.history);
+    setTurns(last.turns);
+    setActivePlayer(last.activePlayer);
+    setUndoStack(prev => prev.slice(0, -1));
+  };
+
   const nextTurn = () => setTurns(turns + 1);
 
-  // --- STATS ---
+  const newMatch = () => {
+    setCurrentGame(false);
+    setSelected([]);
+    setScores({});
+    setHistory([]);
+    setTurns(1);
+    setInputValue("");
+    setUndoStack([]);
+  };
+
   const stats = (p) => {
     const played = games.filter(g => g.players.find(x => x.id === p.id));
     const wins = played.filter(g => g.winner.id === p.id);
 
     const avg = played.length
-      ? (played.reduce((sum, g) => sum + (g.scores[p.id] / (g.history.length || 1)), 0) / played.length).toFixed(2)
+      ? (played.reduce((sum, g) => sum + (g.scores[p.id] / (g.history?.length || 1)), 0) / played.length).toFixed(2)
       : 0;
 
     return { played: played.length, wins: wins.length, avg };
@@ -128,9 +171,18 @@ export default function App() {
               <Button onClick={submitScore} style={{ background: "#22c55e", color: "white" }}>OK</Button>
             </div>
 
-            <Button onClick={nextTurn} style={{ width: "100%", marginTop: 10, background: "#3b82f6", color: "white" }}>
-              Volgende beurt
-            </Button>
+            {/* NEW CONTROLS */}
+            <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+              <Button onClick={undo} style={{ flex: 1, background: "#ef4444", color: "white" }}>
+                ↩️ Undo
+              </Button>
+              <Button onClick={nextTurn} style={{ flex: 1, background: "#3b82f6", color: "white" }}>
+                Volgende beurt
+              </Button>
+              <Button onClick={newMatch} style={{ flex: 1, background: "#6b7280", color: "white" }}>
+                Nieuwe match
+              </Button>
+            </div>
           </Card>
 
           {/* GRAPH */}
@@ -153,6 +205,19 @@ export default function App() {
 
       {!currentGame && (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20 }}>
+
+          {/* ADD PLAYER */}
+          <Card style={{ gridColumn: "span 3" }}>
+            <h3>Speler toevoegen</h3>
+            <div style={{ display: "flex", gap: 10 }}>
+              <input value={newPlayer} onChange={e => setNewPlayer(e.target.value)} placeholder="Naam" style={{ flex: 1, padding: 10 }} />
+              <select value={ballColor} onChange={e => setBallColor(e.target.value)}>
+                <option value="white">Wit</option>
+                <option value="yellow">Geel</option>
+              </select>
+              <Button onClick={addPlayer} style={{ background: "#2563eb", color: "white" }}>Toevoegen</Button>
+            </div>
+          </Card>
 
           {/* PLAYERS */}
           <Card>
