@@ -7,10 +7,12 @@ export default function App() {
   const [photoKey, setPhotoKey] = useState(0);
 
   const [selected, setSelected] = useState([]);
+  const [targets, setTargets] = useState({});
   const [game, setGame] = useState(false);
   const [scores, setScores] = useState({});
   const [active, setActive] = useState(null);
   const [input, setInput] = useState("");
+  const [games, setGames] = useState([]);
 
   // FOTO
   const handlePhoto = (e) => {
@@ -39,7 +41,6 @@ export default function App() {
     e.target.value = "";
   };
 
-  // ADD PLAYER
   const addPlayer = () => {
     if (!name.trim()) return;
 
@@ -57,7 +58,6 @@ export default function App() {
     setPhotoKey(prev => prev + 1);
   };
 
-  // START GAME
   const startGame = () => {
     const init = {};
     selected.forEach(p => (init[p.id] = 0));
@@ -67,15 +67,34 @@ export default function App() {
     setGame(true);
   };
 
-  // SCORE
   const submitScore = () => {
     const val = Number(input || 0);
 
-    setScores(prev => ({
-      ...prev,
-      [active]: prev[active] + val
-    }));
+    const newScores = {
+      ...scores,
+      [active]: scores[active] + val
+    };
 
+    // 🏆 winnaar check
+    const win = selected.find(
+      p => targets[p.id] && newScores[p.id] >= targets[p.id]
+    );
+
+    if (win) {
+      setGames(prev => [...prev, { players: selected, winner: win }]);
+
+      // 🔄 reset (GEEN BUGS)
+      setGame(false);
+      setSelected([]);
+      setTargets({});
+      setScores({});
+      setActive(null);
+      setInput("");
+
+      return;
+    }
+
+    setScores(newScores);
     setInput("");
 
     const next = selected.find(p => p.id !== active)?.id;
@@ -90,14 +109,14 @@ export default function App() {
       {!game && (
         <div>
 
-          {/* ADD */}
+          {/* TOEVOEGEN */}
           <div>
             <input value={name} onChange={e => setName(e.target.value)} />
             <input key={photoKey} type="file" onChange={handlePhoto} />
             <button onClick={addPlayer}>Toevoegen</button>
           </div>
 
-          {/* LIST */}
+          {/* SPELERS */}
           {players.map(p => (
             <div key={p.id} style={{ display: "flex", gap: 10, marginTop: 10 }}>
 
@@ -123,12 +142,31 @@ export default function App() {
                 {p.name}
               </button>
 
+              {/* TARGET */}
+              {selected.find(x => x.id === p.id) && (
+                <input
+                  type="number"
+                  placeholder="target"
+                  value={targets[p.id] || ""}
+                  onChange={e =>
+                    setTargets({ ...targets, [p.id]: Number(e.target.value) })
+                  }
+                />
+              )}
             </div>
           ))}
 
           {selected.length >= 2 && (
             <button onClick={startGame}>Start match</button>
           )}
+
+          {/* 🏆 STATS */}
+          <h3>Resultaten</h3>
+          {games.map((g, i) => (
+            <div key={i}>
+              {g.winner.name} won
+            </div>
+          ))}
         </div>
       )}
 
@@ -143,6 +181,7 @@ export default function App() {
               }}>
                 {p.name}
                 <div>{scores[p.id]}</div>
+                <div>/ {targets[p.id]}</div>
               </div>
             ))}
           </div>
