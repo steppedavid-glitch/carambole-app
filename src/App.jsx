@@ -50,10 +50,12 @@ export default function App() {
   const clearInput = () => setInputValue("");
 
   const submitScore = () => {
-    setUndoStack(prev => [...prev, { scores: { ...scores }, history: [...history], turns, activePlayer }]);
-
     const val = Number(inputValue || 0);
-    const newScores = { ...scores, [activePlayer]: scores[activePlayer] + val };
+
+    const newScores = {
+      ...scores,
+      [activePlayer]: scores[activePlayer] + val
+    };
 
     const newHistory = [...history, {
       turn: turns,
@@ -64,22 +66,30 @@ export default function App() {
     setHistory(newHistory);
     setInputValue("");
 
-    const win = selected.find(p => newScores[p.id] >= targets[p.id]);
+    // ✅ WIN CHECK (FIXED)
+    const win = selected.find(p => newScores[p.id] >= (targets[p.id] || 0));
 
     if (win) {
-      setGames(prev => [...prev, {
+      const game = {
         players: selected,
         scores: newScores,
         winner: win,
         history: newHistory
-      }]);
+      };
 
-      // DIRECT TERUG NAAR START
+      // 🔥 BELANGRIJK: direct opslaan
+      const updatedGames = [...games, game];
+      setGames(updatedGames);
+
+      // 🔥 RESET NA MATCH
       setCurrentGame(false);
       setSelected([]);
       setScores({});
       setHistory([]);
       setTurns(1);
+      setInputValue("");
+      setUndoStack([]);
+
       return;
     }
 
@@ -125,7 +135,6 @@ export default function App() {
       {!currentGame && (
         <div>
 
-          {/* PLAYERS */}
           <h3>Spelers</h3>
           {players.map(p => {
             const s = stats(p);
@@ -136,7 +145,6 @@ export default function App() {
             );
           })}
 
-          {/* RANKING */}
           <h3>Ranking</h3>
           {ranking.map((r, i) => (
             <div key={i}>#{i + 1} {r.name} ({r.wins})</div>
@@ -189,15 +197,15 @@ export default function App() {
             ))}
           </div>
 
-          <div style={{ textAlign: 'center', fontSize: 30 }}>{inputValue || 0}</div>
+          <div style={{ textAlign: 'center', fontSize: 36 }}>{inputValue || 0}</div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
             {[1,2,3,4,5,6,7,8,9].map(n => (
-              <button key={n} onClick={() => addDigit(n.toString())} style={{ height: 80 }}>{n}</button>
+              <button key={n} onClick={() => addDigit(n.toString())} style={{ height: 80, fontSize: 32 }}>{n}</button>
             ))}
-            <button onClick={clearInput} style={{ height: 80, background: '#facc15' }}>C</button>
-            <button onClick={() => addDigit('0')} style={{ height: 80 }}>0</button>
-            <button onClick={submitScore} style={{ height: 80, background: '#22c55e', color: 'white' }}>OK</button>
+            <button onClick={clearInput} style={{ height: 80, fontSize: 28, background: '#facc15' }}>C</button>
+            <button onClick={() => addDigit('0')} style={{ height: 80, fontSize: 32 }}>0</button>
+            <button onClick={submitScore} style={{ height: 80, fontSize: 28, background: '#22c55e', color: 'white' }}>OK</button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginTop: 12 }}>
