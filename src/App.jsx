@@ -57,21 +57,28 @@ export default function App() {
     const val = Number(inputValue || 0);
     const newScores = { ...scores, [activePlayer]: scores[activePlayer] + val };
 
-    setScores(newScores);
-
     const newHistory = [...history, {
       turn: turns,
       ...Object.fromEntries(selected.map(p => [p.name, newScores[p.id]]))
     }];
 
+    setScores(newScores);
     setHistory(newHistory);
     setInputValue("");
 
     const win = selected.find(p => newScores[p.id] >= targets[p.id]);
 
     if (win) {
-      setWinner(win);
-      setGames(prev => [...prev, { players: selected, scores: newScores, winner: win, history: newHistory }]);
+      setCurrentGame(false);
+      setTimeout(() => setWinner(win), 100);
+
+      setGames(prev => [...prev, {
+        players: selected,
+        scores: newScores,
+        winner: win,
+        history: newHistory
+      }]);
+
       return;
     }
 
@@ -112,22 +119,22 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', padding: 20, background: '#f1f5f9' }}>
 
-      <h1 style={{ textAlign: 'center', fontSize: 28, fontWeight: 'bold' }}>🎱 Carambole John & David Steppe</h1>
-
-      {/* WINNER */}
+      {/* WINNER OVERLAY */}
       {winner && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
-          <div style={{ background: 'white', padding: 30, borderRadius: 16, textAlign: 'center' }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 99999 }}>
+          <div style={{ background: "white", padding: 30, borderRadius: 20, textAlign: "center" }}>
             {winner.photo && (
-              <img src={winner.photo} alt="" style={{ width: 140, height: 140, borderRadius: '50%', marginBottom: 15, border: '5px solid #22c55e' }} />
+              <img src={winner.photo} alt="" style={{ width: 150, height: 150, borderRadius: "50%", marginBottom: 20, border: "6px solid #22c55e" }} />
             )}
             <h2>🏆 {winner.name} wint!</h2>
-            <button onClick={newMatch} style={{ marginTop: 15, padding: 12, borderRadius: 10, background: '#22c55e', color: 'white', border: 'none', width: '100%' }}>
+            <button onClick={newMatch} style={{ marginTop: 20, padding: 14, width: "100%", borderRadius: 12, background: "#22c55e", color: "white", border: "none" }}>
               Nieuwe match
             </button>
           </div>
         </div>
       )}
+
+      <h1 style={{ textAlign: 'center' }}>🎱 Carambole Pro John Steppe</h1>
 
       {!currentGame && (
         <div>
@@ -147,17 +154,14 @@ export default function App() {
                 {avatar(p)} {p.name}
               </button>
 
-              <input
-                type="file"
-                onChange={(e) => {
-                  const file = e.target.files[0];
-                  const reader = new FileReader();
-                  reader.onload = () => {
-                    setPlayers(prev => prev.map(pl => pl.id === p.id ? { ...pl, photo: reader.result } : pl));
-                  };
-                  if (file) reader.readAsDataURL(file);
-                }}
-              />
+              <input type="file" onChange={(e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = () => {
+                  setPlayers(prev => prev.map(pl => pl.id === p.id ? { ...pl, photo: reader.result } : pl));
+                };
+                if (file) reader.readAsDataURL(file);
+              }} />
 
               {selected.find(x => x.id === p.id) && (
                 <input type="number" placeholder="target" value={targets[p.id] || ''} onChange={e => setTargets({ ...targets, [p.id]: Number(e.target.value) })} />
@@ -173,18 +177,17 @@ export default function App() {
         <div>
           <div style={{ display: 'flex', gap: 10 }}>
             {selected.map(p => (
-              <div key={p.id}
-                style={{
-                  flex: 1,
-                  textAlign: 'center',
-                  padding: 20,
-                  background: activePlayer === p.id ? '#22c55e' : '#e2e8f0',
-                  borderRadius: 16,
-                  border: activePlayer === p.id ? '4px solid #16a34a' : '2px solid transparent',
-                  boxShadow: activePlayer === p.id ? '0 0 25px rgba(34,197,94,0.7)' : 'none',
-                  transform: activePlayer === p.id ? 'scale(1.05)' : 'scale(1)',
-                  transition: 'all 0.3s ease'
-                }}>
+              <div key={p.id} style={{
+                flex: 1,
+                textAlign: 'center',
+                padding: 20,
+                background: activePlayer === p.id ? '#22c55e' : '#e2e8f0',
+                borderRadius: 16,
+                border: activePlayer === p.id ? '4px solid #16a34a' : '2px solid transparent',
+                boxShadow: activePlayer === p.id ? '0 0 25px rgba(34,197,94,0.7)' : 'none',
+                transform: activePlayer === p.id ? 'scale(1.05)' : 'scale(1)',
+                transition: 'all 0.3s ease'
+              }}>
                 {avatar(p)}
                 <div>{p.name}</div>
                 <div style={{ fontSize: 40 }}>{scores[p.id]}</div>
