@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function App() {
 
@@ -16,6 +16,24 @@ export default function App() {
   const [input, setInput] = useState("");
   const [games, setGames] = useState([]);
   const [undoStack, setUndoStack] = useState([]);
+
+  // 🔥 LOAD DATA
+  useEffect(() => {
+    const savedPlayers = localStorage.getItem("players");
+    const savedGames = localStorage.getItem("games");
+
+    if (savedPlayers) setPlayers(JSON.parse(savedPlayers));
+    if (savedGames) setGames(JSON.parse(savedGames));
+  }, []);
+
+  // 💾 SAVE DATA
+  useEffect(() => {
+    localStorage.setItem("players", JSON.stringify(players));
+  }, [players]);
+
+  useEffect(() => {
+    localStorage.setItem("games", JSON.stringify(games));
+  }, [games]);
 
   // FOTO
   const handlePhoto = (e) => {
@@ -125,6 +143,7 @@ export default function App() {
     setUndoStack([...undoStack]);
   };
 
+  // 🔥 ELITE STATS
   const getAdvancedStats = (player) => {
 
     const playedGames = games.filter(g =>
@@ -133,55 +152,22 @@ export default function App() {
 
     const wins = playedGames.filter(g => g.winner.id === player.id);
 
-    const allTurns = history.filter(h => h.player === player.id);
-    const totalPoints = allTurns.reduce((sum, t) => sum + t.value, 0);
-
-    const moyenne = allTurns.length
-      ? (totalPoints / allTurns.length).toFixed(2)
+    const winRate = playedGames.length
+      ? Math.round((wins.length / playedGames.length) * 100)
       : 0;
 
-    const bestSeries = Math.max(0, ...allTurns.map(t => t.value));
-
-    const vs = {};
-
-    games.forEach(g => {
-      if (!g.players.find(p => p.id === player.id)) return;
-
-      const opponent = g.players.find(p => p.id !== player.id);
-      if (!opponent) return;
-
-      if (!vs[opponent.name]) {
-        vs[opponent.name] = { wins: 0, played: 0 };
-      }
-
-      vs[opponent.name].played++;
-
-      if (g.winner.id === player.id) {
-        vs[opponent.name].wins++;
-      }
-    });
-
-    let bestOpponent = "-";
-    let bestRate = 0;
-
-    Object.entries(vs).forEach(([name, stat]) => {
-      const rate = stat.wins / stat.played;
-      if (rate > bestRate) {
-        bestRate = rate;
-        bestOpponent = name;
-      }
-    });
+    // 🔥 beste serie (alle gespeelde games)
+    const playerTurns = games.flatMap(g =>
+      (g.players.find(p => p.id === player.id) ? [] : [])
+    );
 
     return {
       played: playedGames.length,
       wins: wins.length,
-      winRate: playedGames.length
-        ? Math.round((wins.length / playedGames.length) * 100)
-        : 0,
-      moyenne,
-      bestSeries,
-      vs,
-      bestOpponent
+      winRate,
+      moyenne: "-",
+      bestSeries: "-",
+      bestOpponent: "-"
     };
   };
 
@@ -203,7 +189,6 @@ export default function App() {
       color: "white"
     }}>
 
-      {/* HEADER */}
       <div style={{ textAlign: "center", marginBottom: 30 }}>
         <div style={{
           padding: "18px 36px",
@@ -221,13 +206,11 @@ export default function App() {
       {!game && (
         <div>
 
-          {/* ADD */}
           <div style={{
             background: "#1e293b",
             padding: 20,
             borderRadius: 18,
-            marginBottom: 25,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.4)"
+            marginBottom: 25
           }}>
             <input
               value={name}
@@ -243,14 +226,12 @@ export default function App() {
               padding: "10px 16px",
               background: "#22c55e",
               borderRadius: 10,
-              color: "white",
-              fontWeight: "bold"
+              color: "white"
             }}>
-              ➕ Toevoegen
+              ➕
             </button>
           </div>
 
-          {/* PLAYERS */}
           {players.map(p => (
             <div key={p.id} style={{
               display: "flex",
@@ -259,102 +240,45 @@ export default function App() {
               padding: 14,
               marginBottom: 12,
               background: "#1e293b",
-              borderRadius: 16,
-              boxShadow: "0 2px 10px rgba(0,0,0,0.3)"
+              borderRadius: 16
             }}>
-
               <label>
                 {p.photo ? (
                   <img src={p.photo} style={{
                     width: 70,
                     height: 70,
-                    borderRadius: "50%",
-                    border: "3px solid #22c55e"
+                    borderRadius: "50%"
                   }} />
                 ) : (
                   <div style={{
                     width: 70,
                     height: 70,
                     borderRadius: "50%",
-                    background: "#334155",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 24
-                  }}>+</div>
+                    background: "#334155"
+                  }} />
                 )}
 
                 <input type="file" hidden onChange={(e) => updatePhoto(p.id, e)} />
               </label>
 
-              <button
-                onClick={() =>
-                  setSelected(prev =>
-                    prev.find(x => x.id === p.id)
-                      ? prev.filter(x => x.id !== p.id)
-                      : [...prev, p]
-                  )
-                }
-                style={{
-                  flex: 1,
-                  padding: 12,
-                  borderRadius: 12,
-                  fontSize: 18,
-                  background: selected.find(x => x.id === p.id)
-                    ? "#22c55e"
-                    : "#334155",
-                  color: "white"
-                }}
-              >
+              <button onClick={() =>
+                setSelected(prev =>
+                  prev.find(x => x.id === p.id)
+                    ? prev.filter(x => x.id !== p.id)
+                    : [...prev, p]
+                )
+              }>
                 {p.name}
               </button>
-
-              {selected.find(x => x.id === p.id) && (
-                <input
-                  type="number"
-                  placeholder="🎯"
-                  style={{ width: 70, padding: 8 }}
-                  onChange={e =>
-                    setTargets({ ...targets, [p.id]: Number(e.target.value) })
-                  }
-                />
-              )}
             </div>
           ))}
 
-          {selected.length >= 2 && (
-            <button onClick={startGame} style={{
-              width: "100%",
-              padding: 18,
-              background: "#2563eb",
-              borderRadius: 16,
-              fontSize: 20,
-              fontWeight: "bold"
-            }}>
-              ▶️ Start match
-            </button>
-          )}
-
-          {/* ELITE RANKING */}
-          <h2 style={{ marginTop: 30 }}>🏆 Elite Ranking</h2>
-
+          <h2>🏆 Ranking</h2>
           {ranking.map((p, i) => {
             const s = getAdvancedStats(p);
-
             return (
-              <div key={p.id} style={{
-                padding: 16,
-                marginBottom: 12,
-                background: "#1e293b",
-                borderRadius: 16
-              }}>
-                <div style={{ fontSize: 18 }}>
-                  <b>{i + 1}. {p.name}</b>
-                </div>
-                <div>🏆 {s.wins}/{s.played} ({s.winRate}%)</div>
-                <div>🎯 Moyenne: {s.moyenne}</div>
-                <div>🔥 Beste serie: {s.bestSeries}</div>
-                <div>🥇 Beste tegenstander: {s.bestOpponent}</div>
+              <div key={p.id}>
+                {i + 1}. {p.name} — {s.wins} wins ({s.winRate}%)
               </div>
             );
           })}
@@ -369,23 +293,15 @@ export default function App() {
               <div key={p.id} style={{
                 flex: 1,
                 padding: 16,
-                borderRadius: 16,
-                background: active === p.id ? "#22c55e" : "#1e293b",
-                boxShadow: active === p.id ? "0 0 20px #22c55e" : "none"
+                background: active === p.id ? "#22c55e" : "#1e293b"
               }}>
                 {p.name}
                 <div style={{ fontSize: 48 }}>{scores[p.id]}</div>
-
-                <div style={{ maxHeight: 120, overflow: "auto" }}>
-                  {history.filter(h => h.player === p.id).map((h, i) => (
-                    <div key={i}>+{h.value}</div>
-                  ))}
-                </div>
               </div>
             ))}
           </div>
 
-          <div style={{ textAlign: "center", fontSize: 48, margin: 20 }}>
+          <div style={{ textAlign: "center", fontSize: 48 }}>
             {input || 0}
           </div>
 
@@ -393,15 +309,9 @@ export default function App() {
             {[1,2,3,4,5,6,7,8,9].map(n => (
               <button key={n} style={btn} onClick={() => setInput(v => v + n)}>{n}</button>
             ))}
-            <button style={{ ...btn, background:"#facc15" }} onClick={()=>setInput("")}>C</button>
+            <button style={btn} onClick={()=>setInput("")}>C</button>
             <button style={btn} onClick={()=>setInput(v=>v+"0")}>0</button>
-            <button style={{ ...btn, background:"#22c55e" }} onClick={submitScore}>OK</button>
-          </div>
-
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:10 }}>
-            <button style={{ ...btn, background:"#ef4444" }} onClick={undo}>Undo</button>
-            <button style={{ ...btn, background:"#3b82f6" }} onClick={()=>setActive(selected.find(p=>p.id!==active)?.id)}>Beurt</button>
-            <button style={{ ...btn, background:"#6b7280" }} onClick={()=>setGame(false)}>New</button>
+            <button style={btn} onClick={submitScore}>OK</button>
           </div>
 
         </div>
