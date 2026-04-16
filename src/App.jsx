@@ -54,15 +54,13 @@ export default function App() {
   const submitScore = () => {
     const val = Number(inputValue || 0);
 
-    // save undo
     setUndoStack(prev => [...prev, { scores: { ...scores }, history: [...history] }]);
 
     const newScores = { ...scores, [activePlayer]: scores[activePlayer] + val };
 
     const newHistory = [...history, {
       player: activePlayer,
-      value: val,
-      scores: newScores
+      value: val
     }];
 
     setScores(newScores);
@@ -72,16 +70,8 @@ export default function App() {
     const win = selected.find(p => targets[p.id] && newScores[p.id] >= targets[p.id]);
 
     if (win) {
-      const game = {
-        players: selected,
-        scores: newScores,
-        winner: win,
-        history: newHistory
-      };
+      setGames(prev => [...prev, { players: selected, winner: win }]);
 
-      setGames(prev => [...prev, game]);
-
-      // reset
       setCurrentGame(false);
       setSelected([]);
       setScores({});
@@ -102,33 +92,48 @@ export default function App() {
     setUndoStack([...undoStack]);
   };
 
+  const stats = (p) => {
+    const played = games.filter(g => g.players?.find(x => x.id === p.id));
+    const wins = played.filter(g => g.winner && g.winner.id === p.id);
+    return { wins: wins.length };
+  };
+
   const avatar = (p) => p.photo && (
     <img src={p.photo} style={{ width: 40, height: 40, borderRadius: '50%' }} />
   );
 
-  const stats = (p) => {
-    const played = games.filter(g => g.players?.find(x => x.id === p.id));
-    const wins = played.filter(g => g.winner && g.winner.id === p.id);
-    return { played: played.length, wins: wins.length };
-  };
-
   return (
     <div style={{ padding: 20, background: '#f1f5f9' }}>
 
-      <h1 style={{ textAlign: 'center' }}>🎱 Carambole John & David Steppe</h1>
+      {/* MODERNE TITEL */}
+      <div style={{ textAlign: "center", marginBottom: 20 }}>
+        <div
+          style={{
+            display: "inline-block",
+            padding: "14px 28px",
+            borderRadius: 20,
+            background: "linear-gradient(135deg, #2563eb, #22c55e)",
+            color: "white",
+            fontSize: 30,
+            fontWeight: "800",
+            letterSpacing: 1,
+            boxShadow: "0 0 25px rgba(37,99,235,0.5), 0 0 10px rgba(34,197,94,0.4)",
+            border: "2px solid rgba(255,255,255,0.2)"
+          }}
+        >
+          🎱 Carambole Pro John Steppe
+        </div>
+      </div>
 
       {!currentGame && (
         <div>
           <h3>Spelers</h3>
-          {players.map(p => {
-            const s = stats(p);
-            return (
-              <div key={p.id}>
-                {avatar(p)} {p.name} | 🏆 {s.wins}
-                <input type="file" onChange={(e)=>updatePlayerPhoto(p.id,e.target.files[0])} />
-              </div>
-            );
-          })}
+          {players.map(p => (
+            <div key={p.id}>
+              {avatar(p)} {p.name} | 🏆 {stats(p).wins}
+              <input type="file" onChange={(e)=>updatePlayerPhoto(p.id,e.target.files[0])} />
+            </div>
+          ))}
 
           <h3>Speler toevoegen</h3>
           <input value={newPlayer} onChange={e => setNewPlayer(e.target.value)} />
@@ -165,7 +170,6 @@ export default function App() {
             ))}
           </div>
 
-          {/* SCORE HISTORY */}
           <div style={{ marginTop:10 }}>
             {history.map((h,i) => (
               <div key={i}>
