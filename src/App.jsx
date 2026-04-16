@@ -11,6 +11,7 @@ export default function App() {
   const [scores, setScores] = useState({});
   const [targets, setTargets] = useState({});
   const [history, setHistory] = useState([]);
+
   const [currentGame, setCurrentGame] = useState(false);
   const [activePlayer, setActivePlayer] = useState(null);
   const [inputValue, setInputValue] = useState("");
@@ -31,27 +32,32 @@ export default function App() {
     e.target.value = "";
   };
 
-  // FOTO UPDATE
-  const updatePlayerPhoto = (id, file, input) => {
+  // FOTO UPDATE (FIXED)
+  const updatePlayerPhoto = (id, e) => {
+    const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = () => {
-      setPlayers(prev => prev.map(p => p.id === id ? { ...p, photo: reader.result } : p));
+      setPlayers(prev =>
+        prev.map(p =>
+          p.id === id ? { ...p, photo: reader.result } : p
+        )
+      );
     };
 
     reader.readAsDataURL(file);
-    if (input) input.value = "";
+    e.target.value = ""; // 🔥 cruciaal
   };
 
-  // SPELER TOEVOEGEN
+  // SPELER TOEVOEGEN (FIXED)
   const addPlayer = () => {
     if (!newPlayer.trim()) return;
 
     setPlayers(prev => [
       ...prev,
       {
-        id: Date.now() + Math.random(),
+        id: Date.now(),
         name: newPlayer,
         photo: photo || null
       }
@@ -59,13 +65,14 @@ export default function App() {
 
     setNewPlayer("");
     setPhoto(null);
-    const input = document.getElementById("newPlayerPhoto");
+
+    const input = document.getElementById("photoInput");
     if (input) input.value = "";
   };
 
   const startGame = () => {
     const init = {};
-    selected.forEach(p => init[p.id] = 0);
+    selected.forEach(p => (init[p.id] = 0));
 
     setScores(init);
     setHistory([]);
@@ -74,14 +81,17 @@ export default function App() {
     setCurrentGame(true);
   };
 
+  // 🔥 SUPER STABIELE WIN LOGIC
   const submitScore = () => {
     const val = Number(inputValue || 0);
 
-    setUndoStack(prev => [...prev, {
+    const snapshot = {
       scores: { ...scores },
       history: [...history],
       activePlayer
-    }]);
+    };
+
+    setUndoStack(prev => [...prev, snapshot]);
 
     const newScores = {
       ...scores,
@@ -90,15 +100,21 @@ export default function App() {
 
     const newHistory = [...history, { player: activePlayer, value: val }];
 
-    setScores(newScores);
-    setHistory(newHistory);
-    setInputValue("");
-
-    const win = selected.find(p => targets[p.id] && newScores[p.id] >= targets[p.id]);
+    // 🔥 eerst alles berekenen
+    const win = selected.find(
+      p => targets[p.id] && newScores[p.id] >= targets[p.id]
+    );
 
     if (win) {
-      setGames(prev => [...prev, { players: selected, winner: win }]);
+      const game = {
+        players: selected,
+        winner: win
+      };
 
+      // 🔥 eerst opslaan
+      setGames(prev => [...prev, game]);
+
+      // 🔥 dan reset (geen timing bugs)
       setCurrentGame(false);
       setSelected([]);
       setScores({});
@@ -106,8 +122,15 @@ export default function App() {
       setUndoStack([]);
       setTargets({});
       setActivePlayer(null);
+      setInputValue("");
+
       return;
     }
+
+    // normaal verloop
+    setScores(newScores);
+    setHistory(newHistory);
+    setInputValue("");
 
     const next = selected.find(p => p.id !== activePlayer)?.id;
     setActivePlayer(next);
@@ -116,6 +139,7 @@ export default function App() {
   const undo = () => {
     const last = undoStack.pop();
     if (!last) return;
+
     setScores(last.scores);
     setHistory(last.history);
     setActivePlayer(last.activePlayer);
@@ -124,7 +148,7 @@ export default function App() {
 
   const stats = (p) => {
     const played = games.filter(g => g.players.find(x => x.id === p.id));
-    const wins = played.filter(g => g.winner && g.winner.id === p.id);
+    const wins = played.filter(g => g.winner?.id === p.id);
     return wins.length;
   };
 
@@ -133,34 +157,43 @@ export default function App() {
       {p.photo ? (
         <img src={p.photo} style={{ width: 50, height: 50, borderRadius: "50%" }} />
       ) : (
-        <div style={{ width: 50, height: 50, borderRadius: "50%", background: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center" }}>+</div>
+        <div style={{
+          width: 50,
+          height: 50,
+          borderRadius: "50%",
+          background: "#e2e8f0",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}>
+          +
+        </div>
       )}
-      <input type="file" style={{ display: "none" }} onChange={(e) => updatePlayerPhoto(p.id, e.target.files[0], e.target)} />
+      <input
+        type="file"
+        style={{ display: "none" }}
+        onChange={(e) => updatePlayerPhoto(p.id, e)}
+      />
     </label>
   );
+
+  const btn = {
+    height: 80,
+    fontSize: 32,
+    borderRadius: 12
+  };
 
   return (
     <div style={{ padding: 20, background: "#f1f5f9" }}>
 
-      <div style={{ textAlign: "center", marginBottom: 20 }}>
-        <div style={{
-          display: "inline-block",
-          padding: "14px 28px",
-          borderRadius: 20,
-          background: "linear-gradient(135deg,#2563eb,#22c55e)",
-          color: "white",
-          fontSize: 28,
-          fontWeight: "800"
-        }}>
-          🎱 Carambole Pro John Steppe
-        </div>
-      </div>
+      <h1 style={{ textAlign: "center" }}>🎱 Carambole Pro John Steppe</h1>
 
       {!currentGame && (
         <div>
           <h3>Spelers</h3>
+
           {players.map(p => (
-            <div key={p.id} style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
+            <div key={p.id} style={{ display: "flex", gap: 10, alignItems: "center" }}>
               {avatar(p)}
               <div>{p.name}</div>
               <div>🏆 {stats(p)}</div>
@@ -169,17 +202,19 @@ export default function App() {
 
           <h3>Toevoegen</h3>
           <input value={newPlayer} onChange={e => setNewPlayer(e.target.value)} />
-          <input id="newPlayerPhoto" type="file" onChange={handlePhoto} />
+          <input id="photoInput" type="file" onChange={handlePhoto} />
           <button onClick={addPlayer}>Add</button>
 
           <h3>Selecteer spelers</h3>
           {players.map(p => (
             <div key={p.id}>
-              <button onClick={() => setSelected(prev =>
-                prev.find(x => x.id === p.id)
-                  ? prev.filter(x => x.id !== p.id)
-                  : [...prev, p]
-              )}>
+              <button onClick={() =>
+                setSelected(prev =>
+                  prev.find(x => x.id === p.id)
+                    ? prev.filter(x => x.id !== p.id)
+                    : [...prev, p]
+                )
+              }>
                 {p.name}
               </button>
 
@@ -188,7 +223,9 @@ export default function App() {
                   type="number"
                   placeholder="target"
                   value={targets[p.id] || ""}
-                  onChange={e => setTargets({ ...targets, [p.id]: Number(e.target.value) })}
+                  onChange={e =>
+                    setTargets({ ...targets, [p.id]: Number(e.target.value) })
+                  }
                 />
               )}
             </div>
@@ -203,12 +240,17 @@ export default function App() {
 
           <div style={{ display: "flex", gap: 10 }}>
             {selected.map(p => (
-              <div key={p.id} style={{ flex: 1, padding: 10, background: activePlayer === p.id ? "#22c55e" : "#e2e8f0", borderRadius: 12 }}>
+              <div key={p.id} style={{
+                flex: 1,
+                padding: 10,
+                background: activePlayer === p.id ? "#22c55e" : "#e2e8f0",
+                borderRadius: 12
+              }}>
                 {avatar(p)}
                 <div>{p.name}</div>
                 <div style={{ fontSize: 40 }}>{scores[p.id]}</div>
 
-                <div style={{ maxHeight: 100, overflow: "auto", fontSize: 14 }}>
+                <div style={{ maxHeight: 100, overflow: "auto" }}>
                   {history.filter(h => h.player === p.id).map((h, i) => (
                     <div key={i}>+{h.value}</div>
                   ))}
@@ -221,22 +263,21 @@ export default function App() {
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
             {[1,2,3,4,5,6,7,8,9].map(n => (
-              <button key={n} onClick={() => setInputValue(v => v + n)} style={{ height: 80, fontSize: 32 }}>{n}</button>
+              <button key={n} style={btn} onClick={() => setInputValue(v => v + n)}>{n}</button>
             ))}
-            <button style={{ height:80, fontSize:32 }} onClick={()=>setInputValue("")}>C</button>
-            <button style={{ height:80, fontSize:32 }} onClick={()=>setInputValue(v=>v+"0")}>0</button>
-            <button style={{ height:80, fontSize:32 }} onClick={submitScore}>OK</button>
+            <button style={{ ...btn, background: "#facc15" }} onClick={()=>setInputValue("")}>C</button>
+            <button style={btn} onClick={()=>setInputValue(v=>v+"0")}>0</button>
+            <button style={{ ...btn, background: "#22c55e", color: "white" }} onClick={submitScore}>OK</button>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
-            <button style={{ height:80 }} onClick={undo}>Undo</button>
-            <button style={{ height:80 }} onClick={()=>setActivePlayer(selected.find(p=>p.id!==activePlayer)?.id)}>Beurt</button>
-            <button style={{ height:80 }} onClick={()=>setCurrentGame(false)}>New</button>
+            <button style={{ ...btn, background: "#ef4444", color: "white" }} onClick={undo}>Undo</button>
+            <button style={{ ...btn, background: "#3b82f6", color: "white" }} onClick={()=>setActivePlayer(selected.find(p=>p.id!==activePlayer)?.id)}>Beurt</button>
+            <button style={{ ...btn, background: "#6b7280", color: "white" }} onClick={()=>setCurrentGame(false)}>New</button>
           </div>
 
         </div>
       )}
-
     </div>
   );
 }
