@@ -60,15 +60,20 @@ export default function App() {
     const newScores = { ...scores, [id]: newScore };
     setScores(newScores);
 
-    // winnaar check
     const winner = selected.find(p => newScores[p.id] >= targets[p.id]);
     if (winner) {
-      setGames([...games, {
+      const newGame = {
         players: selected,
         scores: newScores,
         winner,
-        turns
-      }]);
+        turns,
+        moyenne: Object.fromEntries(
+          selected.map(p => [p.id, (newScores[p.id] / (turns || 1)).toFixed(2)])
+        ),
+        series
+      };
+
+      setGames([...games, newGame]);
       setCurrentGame(false);
       alert(`🏆 ${winner.name} wint!`);
     }
@@ -83,6 +88,39 @@ export default function App() {
     );
   };
 
+  // 📊 Stats
+  const getStats = (player) => {
+    const played = games.filter(g => g.players.find(p => p.id === player.id));
+    const wins = played.filter(g => g.winner.id === player.id);
+
+    const avg = played.length
+      ? (played.reduce((sum, g) => sum + Number(g.moyenne[player.id] || 0), 0) / played.length).toFixed(2)
+      : 0;
+
+    const bestSeries = Math.max(0, ...played.map(g => g.series?.[player.id]?.best || 0));
+
+    return { played: played.length, wins: wins.length, avg, bestSeries };
+  };
+
+  const ranking = [...players]
+    .map(p => {
+      const s = getStats(p);
+      return { name: p.name, ...s, rate: s.played ? (s.wins / s.played) : 0 };
+    })
+    .sort((a, b) => b.rate - a.rate);
+
+  const getHeadToHead = (p1, p2) => {
+    const matches = games.filter(g =>
+      g.players.find(p => p.id === p1.id) &&
+      g.players.find(p => p.id === p2.id)
+    );
+
+    return {
+      p1: matches.filter(g => g.winner.id === p1.id).length,
+      p2: matches.filter(g => g.winner.id === p2.id).length
+    };
+  };
+
   return (
     <div style={{ padding: 20 }}>
       <h1>🎱 Carambole Pro</h1>
@@ -91,53 +129,33 @@ export default function App() {
       <input value={newPlayer} onChange={e => setNewPlayer(e.target.value)} />
       <button onClick={addPlayer}>Toevoegen</button>
 
-      {players.map(p => (
-        <div key={p.id}>
-          <button onClick={() => selectPlayer(p)}>{p.name}</button>
-        </div>
-      ))}
+      {players.map(p => {
+        const s = getStats(p);
+        return (
+          <div key={p.id}>
+            {p.name} | 🎯 {s.played} | 🏆 {s.wins} | Moy {s.avg} | 🔥 {s.bestSeries}
+          </div>
+        );
+      })}
 
-      {selected.length === 2 && !currentGame && (
-        <div>
-          <h2>Game setup</h2>
-          {selected.map(p => (
-            <div key={p.id}>
-              {p.name}
-              <input
-                type="number"
-                value={targets[p.id]}
-                onChange={e => setTargets({ ...targets, [p.id]: Number(e.target.value) })}
-              />
-            </div>
-          ))}
-          <button onClick={startGame}>Start</button>
-        </div>
-      )}
-
-      {currentGame && (
-        <div>
-          <h2>Match</h2>
-          {selected.map(p => (
-            <div key={p.id}>
-              <b>{p.name}</b> — {scores[p.id]} / {targets[p.id]}
-              | Moy: {(scores[p.id]/(turns||1)).toFixed(2)}
-              | Serie: {series[p.id]?.best}
-              <button onClick={() => updateScore(p.id, 1)}>+1</button>
-              <button onClick={() => updateScore(p.id, -1)}>-1</button>
-            </div>
-          ))}
-
-          <div>Beurten: {turns}</div>
-          <button onClick={nextTurn}>Volgende beurt</button>
-        </div>
-      )}
-
-      <h2>Historiek</h2>
-      {games.map((g, i) => (
+      <h2>Ranking</h2>
+      {ranking.map((r, i) => (
         <div key={i}>
-          {g.players[0].name} vs {g.players[1].name} → 🏆 {g.winner.name}
+          #{i + 1} {r.name}
         </div>
       ))}
+
+      <h2>Onderlinge stats</h2>
+      {players.map((p1, i) =>
+        players.slice(i + 1).map(p2 => {
+          const h = getHeadToHead(p1, p2);
+          return (
+            <div key={p1.id + p2.id}>
+              {p1.name} vs {p2.name} → {h.p1} - {h.p2}
+            </div>
+          );
+        })
+      )}
     </div>
   );
 }
