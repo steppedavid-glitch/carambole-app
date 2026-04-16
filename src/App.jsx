@@ -9,6 +9,7 @@ export default function App() {
 
   const [selected, setSelected] = useState([]);
   const [targets, setTargets] = useState({});
+  const [colors, setColors] = useState({});
   const [game, setGame] = useState(false);
   const [scores, setScores] = useState({});
   const [history, setHistory] = useState([]);
@@ -17,16 +18,16 @@ export default function App() {
   const [games, setGames] = useState([]);
   const [undoStack, setUndoStack] = useState([]);
 
-  // 🔥 LOAD DATA
+  // LOAD
   useEffect(() => {
-    const savedPlayers = localStorage.getItem("players");
-    const savedGames = localStorage.getItem("games");
+    const p = localStorage.getItem("players");
+    const g = localStorage.getItem("games");
 
-    if (savedPlayers) setPlayers(JSON.parse(savedPlayers));
-    if (savedGames) setGames(JSON.parse(savedGames));
+    if (p) setPlayers(JSON.parse(p));
+    if (g) setGames(JSON.parse(g));
   }, []);
 
-  // 💾 SAVE DATA
+  // SAVE
   useEffect(() => {
     localStorage.setItem("players", JSON.stringify(players));
   }, [players]);
@@ -78,11 +79,21 @@ export default function App() {
     setPhotoKey(prev => prev + 1);
   };
 
+  // 🎯 START GAME MET AUTO TARGET + KLEUR
   const startGame = () => {
     const init = {};
-    selected.forEach(p => init[p.id] = 0);
+    const newTargets = {};
+    const newColors = {};
+
+    selected.forEach((p, i) => {
+      init[p.id] = 0;
+      newTargets[p.id] = i === 0 ? 10 : 20;
+      newColors[p.id] = i === 0 ? "white" : "yellow";
+    });
 
     setScores(init);
+    setTargets(newTargets);
+    setColors(newColors);
     setHistory([]);
     setUndoStack([]);
     setActive(selected[0].id);
@@ -109,7 +120,7 @@ export default function App() {
     }];
 
     const win = selected.find(
-      p => targets[p.id] && newScores[p.id] >= targets[p.id]
+      p => newScores[p.id] >= targets[p.id]
     );
 
     if (win) {
@@ -143,121 +154,36 @@ export default function App() {
     setUndoStack([...undoStack]);
   };
 
-  // 🔥 ELITE STATS
-  const getAdvancedStats = (player) => {
-
-    const playedGames = games.filter(g =>
-      g.players.find(p => p.id === player.id)
-    );
-
-    const wins = playedGames.filter(g => g.winner.id === player.id);
-
-    const winRate = playedGames.length
-      ? Math.round((wins.length / playedGames.length) * 100)
-      : 0;
-
-    // 🔥 beste serie (alle gespeelde games)
-    const playerTurns = games.flatMap(g =>
-      (g.players.find(p => p.id === player.id) ? [] : [])
-    );
-
-    return {
-      played: playedGames.length,
-      wins: wins.length,
-      winRate,
-      moyenne: "-",
-      bestSeries: "-",
-      bestOpponent: "-"
-    };
-  };
-
-  const ranking = [...players].sort((a, b) =>
-    getAdvancedStats(b).wins - getAdvancedStats(a).wins
-  );
-
-  const btn = {
-    height: 80,
-    fontSize: 28,
-    borderRadius: 12
-  };
-
   return (
     <div style={{
       minHeight: "100vh",
       padding: 20,
-      background: "linear-gradient(135deg,#0f172a,#1e293b)",
+      background: "#0f172a",
       color: "white"
     }}>
 
-      <div style={{ textAlign: "center", marginBottom: 30 }}>
-        <div style={{
-          padding: "18px 36px",
-          borderRadius: 20,
-          background: "linear-gradient(135deg,#2563eb,#22c55e)",
-          fontSize: 32,
-          fontWeight: "800",
-          display: "inline-block",
-          boxShadow: "0 0 30px rgba(37,99,235,0.7)"
-        }}>
-          🎱 Carambole John, David, Bjarni & Friends
-        </div>
-      </div>
+      <h1 style={{ textAlign: "center" }}>
+        🎱 Carambole
+      </h1>
 
       {!game && (
         <div>
 
-          <div style={{
-            background: "#1e293b",
-            padding: 20,
-            borderRadius: 18,
-            marginBottom: 25
-          }}>
-            <input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="Naam speler"
-              style={{ padding: 12, fontSize: 16, marginRight: 10 }}
-            />
+          {/* ADD */}
+          <input value={name} onChange={e => setName(e.target.value)} />
+          <input key={photoKey} type="file" onChange={handlePhoto} />
+          <button onClick={addPlayer}>➕</button>
 
-            <input key={photoKey} type="file" onChange={handlePhoto} />
-
-            <button onClick={addPlayer} style={{
-              marginLeft: 10,
-              padding: "10px 16px",
-              background: "#22c55e",
-              borderRadius: 10,
-              color: "white"
-            }}>
-              ➕
-            </button>
-          </div>
-
+          {/* PLAYERS */}
           {players.map(p => (
-            <div key={p.id} style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 14,
-              padding: 14,
-              marginBottom: 12,
-              background: "#1e293b",
-              borderRadius: 16
-            }}>
+            <div key={p.id} style={{ display: "flex", gap: 10, marginTop: 10 }}>
+
               <label>
                 {p.photo ? (
-                  <img src={p.photo} style={{
-                    width: 70,
-                    height: 70,
-                    borderRadius: "50%"
-                  }} />
+                  <img src={p.photo} style={{ width: 50, height: 50, borderRadius: "50%" }} />
                 ) : (
-                  <div style={{
-                    width: 70,
-                    height: 70,
-                    borderRadius: "50%",
-                    background: "#334155"
-                  }} />
+                  <div style={{ width: 50, height: 50, background: "#444", borderRadius: "50%" }} />
                 )}
-
                 <input type="file" hidden onChange={(e) => updatePhoto(p.id, e)} />
               </label>
 
@@ -270,49 +196,57 @@ export default function App() {
               }>
                 {p.name}
               </button>
+
             </div>
           ))}
 
-          <h2>🏆 Ranking</h2>
-          {ranking.map((p, i) => {
-            const s = getAdvancedStats(p);
-            return (
-              <div key={p.id}>
-                {i + 1}. {p.name} — {s.wins} wins ({s.winRate}%)
-              </div>
-            );
-          })}
+          {selected.length >= 2 && (
+            <button onClick={startGame}>Start match</button>
+          )}
+
         </div>
       )}
 
       {game && (
         <div>
 
+          {/* SCORE */}
           <div style={{ display: "flex", gap: 10 }}>
             {selected.map(p => (
               <div key={p.id} style={{
                 flex: 1,
-                padding: 16,
-                background: active === p.id ? "#22c55e" : "#1e293b"
+                padding: 10,
+                background: active === p.id ? "#22c55e" : "#333"
               }}>
-                {p.name}
-                <div style={{ fontSize: 48 }}>{scores[p.id]}</div>
+                <div>
+                  {colors[p.id] === "white" ? "⚪" : "🟡"} {p.name}
+                </div>
+
+                <div style={{ fontSize: 40 }}>{scores[p.id]}</div>
+                <div>/ {targets[p.id]}</div>
+
+                <div style={{ maxHeight: 100, overflow: "auto" }}>
+                  {history.filter(h => h.player === p.id).map((h, i) => (
+                    <div key={i}>+{h.value}</div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
 
-          <div style={{ textAlign: "center", fontSize: 48 }}>
-            {input || 0}
+          <div style={{ fontSize: 40 }}>{input || 0}</div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)" }}>
+            {[1,2,3,4,5,6,7,8,9].map(n => (
+              <button key={n} onClick={() => setInput(v => v + n)}>{n}</button>
+            ))}
+            <button onClick={()=>setInput("")}>C</button>
+            <button onClick={()=>setInput(v=>v+"0")}>0</button>
+            <button onClick={submitScore}>OK</button>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
-            {[1,2,3,4,5,6,7,8,9].map(n => (
-              <button key={n} style={btn} onClick={() => setInput(v => v + n)}>{n}</button>
-            ))}
-            <button style={btn} onClick={()=>setInput("")}>C</button>
-            <button style={btn} onClick={()=>setInput(v=>v+"0")}>0</button>
-            <button style={btn} onClick={submitScore}>OK</button>
-          </div>
+          <button onClick={undo}>Undo</button>
+          <button onClick={()=>setGame(false)}>New</button>
 
         </div>
       )}
