@@ -5,11 +5,10 @@ export default function App() {
   // ---------- STATE ----------
   const [players, setPlayers] = useState([]);
   const [name, setName] = useState("");
-  const [photo, setPhoto] = useState(null);
-  const [photoKey, setPhotoKey] = useState(0);
 
   const [selected, setSelected] = useState([]);
   const [targets, setTargets] = useState({});
+
   const [game, setGame] = useState(false);
 
   const [scores, setScores] = useState({});
@@ -34,48 +33,12 @@ export default function App() {
     localStorage.setItem("games", JSON.stringify(games));
   }, [games]);
 
-  // ---------- PHOTO ----------
-  const handlePhoto = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => setPhoto(reader.result);
-    reader.readAsDataURL(file);
-  };
-
-  const updatePhoto = (id, e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPlayers(prev =>
-        prev.map(p =>
-          p.id === id ? { ...p, photo: reader.result } : p
-        )
-      );
-    };
-
-    reader.readAsDataURL(file);
-  };
-
   // ---------- PLAYER ----------
   const addPlayer = () => {
     if (!name.trim()) return;
 
-    setPlayers(prev => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        name,
-        photo: photo || null
-      }
-    ]);
-
+    setPlayers(prev => [...prev, { id: crypto.randomUUID(), name }]);
     setName("");
-    setPhoto(null);
-    setPhotoKey(k => k + 1);
   };
 
   const togglePlayer = (p) => {
@@ -171,6 +134,7 @@ export default function App() {
     };
   };
 
+  // ---------- HEAD TO HEAD ----------
   const getHeadToHead = () => {
     const results = {};
 
@@ -178,6 +142,7 @@ export default function App() {
       if (g.players.length !== 2) return;
 
       const [p1, p2] = g.players;
+
       const key = [p1.name, p2.name].sort().join(" vs ");
 
       if (!results[key]) {
@@ -214,47 +179,15 @@ export default function App() {
 
       <div style={{ width: "100%", maxWidth: 900 }}>
 
-        {/* HEADER */}
-        <div style={{ textAlign: "center", marginBottom: 30 }}>
-          <div style={{
-            padding: "16px 32px",
-            borderRadius: 20,
-            background: "linear-gradient(135deg,#2563eb,#22c55e)",
-            fontSize: 28,
-            fontWeight: "bold",
-            boxShadow: "0 0 25px rgba(37,99,235,0.6)"
-          }}>
-            🎱 Carambole John, David & Bjarni
-          </div>
-        </div>
+        <h1 style={{ textAlign: "center" }}>🎱 Carambole Elite</h1>
 
         {/* START */}
         {!game && (
           <>
             {/* ADD */}
-            <div style={{
-              background: "#1e293b",
-              padding: 20,
-              borderRadius: 16,
-              marginBottom: 20,
-              display: "flex",
-              gap: 10,
-              alignItems: "center"
-            }}>
-              <input
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Nieuwe speler"
-                style={{ flex: 1, padding: 12, borderRadius: 10 }}
-              />
-
-              <input key={photoKey} type="file" onChange={handlePhoto} />
-
-              <button onClick={addPlayer} style={{
-                background: "#22c55e",
-                padding: "10px 16px",
-                borderRadius: 10
-              }}>➕</button>
+            <div style={{ marginBottom: 20 }}>
+              <input value={name} onChange={e => setName(e.target.value)} />
+              <button onClick={addPlayer}>➕</button>
             </div>
 
             {/* PLAYERS */}
@@ -262,38 +195,10 @@ export default function App() {
               const isSelected = selected.find(x => x.id === p.id);
 
               return (
-                <div key={p.id} style={{
-                  background: "#1e293b",
-                  padding: 14,
-                  borderRadius: 12,
-                  marginBottom: 10,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10
-                }}>
-                  <label>
-                    {p.photo ? (
-                      <img src={p.photo} style={{
-                        width: 50,
-                        height: 50,
-                        borderRadius: "50%",
-                        objectFit: "cover"
-                      }} />
-                    ) : (
-                      <div style={{
-                        width: 50,
-                        height: 50,
-                        borderRadius: "50%",
-                        background: "#334155",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center"
-                      }}>📸</div>
-                    )}
-                    <input type="file" hidden onChange={(e)=>updatePhoto(p.id,e)} />
-                  </label>
-
-                  <div style={{ flex: 1 }}>{p.name}</div>
+                <div key={p.id} style={{ marginBottom: 10 }}>
+                  <button onClick={() => togglePlayer(p)}>
+                    {p.name}
+                  </button>
 
                   {isSelected && (
                     <input
@@ -305,35 +210,18 @@ export default function App() {
                           [p.id]: Number(e.target.value)
                         })
                       }
-                      style={{ width: 70 }}
                     />
                   )}
-
-                  <button onClick={() => togglePlayer(p)} style={{
-                    background: isSelected ? "#22c55e" : "#334155",
-                    padding: "8px 12px",
-                    borderRadius: 8
-                  }}>
-                    {isSelected ? "✓" : "Selecteer"}
-                  </button>
                 </div>
               );
             })}
 
             {selected.length >= 2 && (
-              <button onClick={startGame} style={{
-                width: "100%",
-                padding: 16,
-                marginTop: 20,
-                borderRadius: 12,
-                background: "#2563eb"
-              }}>
-                ▶️ Start match
-              </button>
+              <button onClick={startGame}>Start match</button>
             )}
 
             {/* RANKING */}
-            <h3 style={{ marginTop: 30 }}>🏆 Ranking</h3>
+            <h3>🏆 Ranking</h3>
             {ranking.map((p,i)=>{
               const s = getStats(p);
               return (
@@ -344,7 +232,7 @@ export default function App() {
             })}
 
             {/* HEAD TO HEAD */}
-            <h3 style={{ marginTop: 30 }}>🤝 Onderlinge duels</h3>
+            <h3>🤝 Onderlinge duels</h3>
             {getHeadToHead().map((m, i) => (
               <div key={i}>
                 {m.p1} vs {m.p2} → {m.w1} - {m.w2}
