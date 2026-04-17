@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+mport React, { useState, useEffect } from "react";
 
 export default function App() {
 
@@ -421,8 +421,18 @@ export default function App() {
                     flex: 1,
                     padding: 10,
                     borderRadius: 10,
-                    background: active === p.id ? "#22c55e" : "#1e293b"
-                  }}>
+		background:
+  active === p.id
+    ? selected.findIndex(x => x.id === p.id) === 0
+      ? "#facc15" // geel
+      : "#ffffff" // wit
+    : "#1e293b",
+color:
+  active === p.id &&
+  selected.findIndex(x => x.id === p.id) === 1
+    ? "#000000" // zwarte tekst op witte achtergrond
+    : "white"
+                                      }}>
                     {p.name}
                     <div style={{ fontSize: 28 }}>{scores[p.id]}</div>
                     <div>/ {targets[p.id]}</div>
