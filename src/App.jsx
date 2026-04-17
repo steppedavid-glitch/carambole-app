@@ -269,7 +269,7 @@ return (
           fontWeight: "bold",
           boxShadow: "0 0 25px rgba(37,99,235,0.6)"
         }}>
-          🎱 Carambole John, David & Bjarni
+          🎱 Carambole John, David, Bjarni & Friends
         </div>
       </div>
 
