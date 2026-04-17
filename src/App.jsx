@@ -5,7 +5,6 @@ export default function App() {
   // ---------- STATE ----------
   const [players, setPlayers] = useState([]);
   const [name, setName] = useState("");
-  const [photo, setPhoto] = useState(null);
 
   const [selected, setSelected] = useState([]);
   const [game, setGame] = useState(false);
@@ -21,15 +20,8 @@ export default function App() {
 
   // ---------- STORAGE ----------
   useEffect(() => {
-    try {
-      const p = JSON.parse(localStorage.getItem("players")) || [];
-      const g = JSON.parse(localStorage.getItem("games")) || [];
-      setPlayers(p);
-      setGames(g);
-    } catch {
-      setPlayers([]);
-      setGames([]);
-    }
+    setPlayers(JSON.parse(localStorage.getItem("players")) || []);
+    setGames(JSON.parse(localStorage.getItem("games")) || []);
   }, []);
 
   useEffect(() => {
@@ -41,29 +33,10 @@ export default function App() {
   }, [games]);
 
   // ---------- PLAYER ----------
-  const handlePhoto = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => setPhoto(reader.result);
-    reader.readAsDataURL(file);
-  };
-
   const addPlayer = () => {
     if (!name.trim()) return;
-
-    setPlayers(prev => [
-      ...prev,
-      {
-        id: crypto.randomUUID(),
-        name: name.trim(),
-        photo: photo || null
-      }
-    ]);
-
+    setPlayers(prev => [...prev, { id: crypto.randomUUID(), name }]);
     setName("");
-    setPhoto(null);
   };
 
   const togglePlayer = (p) => {
@@ -105,9 +78,7 @@ export default function App() {
 
     const newHistory = [...history, { player: active, val }];
 
-    const winner = selected.find(
-      p => newScores[p.id] >= targets[p.id]
-    );
+    const winner = selected.find(p => newScores[p.id] >= targets[p.id]);
 
     if (winner) {
       setGames(prev => [...prev, { players: selected, winner }]);
@@ -119,13 +90,12 @@ export default function App() {
     setHistory(newHistory);
     setInput("");
 
-    const next = selected.find(p => p.id !== active);
-    setActive(next.id);
+    const idx = selected.findIndex(p => p.id === active);
+    setActive(selected[(idx + 1) % selected.length].id);
   };
 
   const undo = () => {
     if (!undoStack.length) return;
-
     const last = undoStack[undoStack.length - 1];
     setScores(last.scores);
     setHistory(last.history);
@@ -143,146 +113,132 @@ export default function App() {
     setInput("");
   };
 
-  // ---------- UI ----------
-  const card = {
-    background: "#1e293b",
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12
+  // ---------- STATS ----------
+  const getStats = (player) => {
+    const playerTurns = history.filter(h => h.player === player.id);
+
+    const total = playerTurns.reduce((sum, t) => sum + t.val, 0);
+
+    return {
+      moyenne: playerTurns.length ? (total / playerTurns.length).toFixed(2) : 0,
+      best: Math.max(0, ...playerTurns.map(t => t.val))
+    };
   };
 
+  // ---------- UI ----------
   const btn = {
-    padding: 14,
-    borderRadius: 12,
-    fontSize: 18
+    height: 65,
+    fontSize: 22,
+    borderRadius: 10
   };
 
   return (
     <div style={{
-      minHeight: "100vh",
       padding: 20,
+      minHeight: "100vh",
       background: "linear-gradient(135deg,#0f172a,#1e293b)",
       color: "white"
     }}>
 
-      {/* HEADER */}
-      <div style={{ textAlign: "center", marginBottom: 30 }}>
-        <div style={{
-          padding: "14px 28px",
-          borderRadius: 16,
-          background: "linear-gradient(135deg,#2563eb,#22c55e)",
-          fontSize: 26,
-          fontWeight: "bold"
-        }}>
-          🎱 Carambole Pro
-        </div>
-      </div>
+      <h1 style={{ textAlign: "center" }}>🎱 Carambole Elite</h1>
 
-      {/* START SCREEN */}
       {!game && (
         <>
-          <div style={card}>
-            <input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="Naam speler"
-              style={{ padding: 10, marginRight: 10 }}
-            />
-
-            <input type="file" onChange={handlePhoto} />
-
-            <button onClick={addPlayer} style={btn}>
-              ➕
-            </button>
-          </div>
+          <input value={name} onChange={e => setName(e.target.value)} />
+          <button onClick={addPlayer}>➕</button>
 
           {players.map(p => (
-            <div key={p.id} style={{
-              ...card,
-              display: "flex",
-              alignItems: "center",
-              gap: 12
-            }}>
-              {p.photo && (
-                <img src={p.photo} style={{
-                  width: 50,
-                  height: 50,
-                  borderRadius: "50%"
-                }} />
-              )}
-
-              <button
-                onClick={() => togglePlayer(p)}
-                style={{
-                  ...btn,
-                  flex: 1,
-                  background: selected.find(x => x.id === p.id)
-                    ? "#22c55e"
-                    : "#334155"
-                }}
-              >
+            <div key={p.id}>
+              <button onClick={() => togglePlayer(p)}>
                 {p.name}
               </button>
             </div>
           ))}
 
           {selected.length >= 2 && (
-            <button onClick={startGame} style={{
-              ...btn,
-              width: "100%",
-              background: "#2563eb"
-            }}>
-              ▶️ Start match
-            </button>
+            <button onClick={startGame}>Start match</button>
           )}
         </>
       )}
 
-      {/* GAME */}
       {game && (
         <>
+          {/* SCORE */}
           <div style={{ display: "flex", gap: 10 }}>
             {selected.map(p => {
 
               const last = history.filter(h => h.player === p.id).slice(-3);
+              const stats = getStats(p);
 
               return (
                 <div key={p.id} style={{
-                  ...card,
                   flex: 1,
+                  padding: 12,
+                  borderRadius: 12,
                   background: active === p.id ? "#22c55e" : "#1e293b"
                 }}>
-                  <div style={{ fontSize: 18 }}>{p.name}</div>
+                  <div>{p.name}</div>
 
-                  <div style={{ fontSize: 40 }}>
-                    {scores[p.id]}
+                  <div style={{ fontSize: 32 }}>{scores[p.id]}</div>
+                  <div>/ {targets[p.id]}</div>
+
+                  <div style={{ fontSize: 12 }}>
+                    Moy: {stats.moyenne} | Best: {stats.best}
                   </div>
 
-                  <div>/ {targets[p.id]}</div>
+                  {/* MINI GRAPH */}
+                  <div style={{
+                    display: "flex",
+                    gap: 2,
+                    marginTop: 6,
+                    height: 30
+                  }}>
+                    {history
+                      .filter(h => h.player === p.id)
+                      .slice(-10)
+                      .map((h, i) => (
+                        <div key={i} style={{
+                          width: 6,
+                          height: h.val * 5,
+                          background: "#38bdf8"
+                        }} />
+                      ))}
+                  </div>
 
                   {last.map((h,i)=>(
                     <div key={i}>+{h.val}</div>
                   ))}
+
                 </div>
               );
             })}
           </div>
 
-          <div style={{ textAlign: "center", fontSize: 40 }}>
+          <div style={{ textAlign: "center", fontSize: 36 }}>
             {input || 0}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10 }}>
+          {/* KEYPAD */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3,1fr)",
+            gap: 10
+          }}>
             {[1,2,3,4,5,6,7,8,9].map(n => (
               <button key={n} style={btn} onClick={()=>setInput(v=>v+n)}>{n}</button>
             ))}
-            <button style={btn} onClick={()=>setInput("")}>C</button>
+
+            <button style={{...btn, background:"#facc15"}} onClick={()=>setInput("")}>C</button>
             <button style={btn} onClick={()=>setInput(v=>v+"0")}>0</button>
             <button style={{...btn, background:"#22c55e"}} onClick={submitScore}>OK</button>
-          </div>
 
-          <button onClick={undo} style={{...btn, marginTop:10}}>Undo</button>
-          <button onClick={resetGame} style={{...btn, marginTop:10}}>Nieuwe match</button>
+            <button style={{...btn, background:"#ef4444"}} onClick={undo}>Undo</button>
+            <button style={{...btn, background:"#3b82f6"}} onClick={()=>{
+              const idx = selected.findIndex(p => p.id === active);
+              setActive(selected[(idx + 1) % selected.length].id);
+            }}>Beurt</button>
+            <button style={{...btn, background:"#6b7280"}} onClick={resetGame}>New</button>
+          </div>
         </>
       )}
     </div>
