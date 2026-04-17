@@ -26,6 +26,7 @@ export default function App() {
   useEffect(() => {
     setPlayers(JSON.parse(localStorage.getItem("players")) || []);
     setGames(JSON.parse(localStorage.getItem("games")) || []);
+    setTargets(JSON.parse(localStorage.getItem("targets")) || {});
   }, []);
 
   useEffect(() => {
@@ -35,6 +36,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("games", JSON.stringify(games));
   }, [games]);
+
+  useEffect(() => {
+    localStorage.setItem("targets", JSON.stringify(targets));
+  }, [targets]);
 
   // ---------- PLAYER ----------
   const addPlayer = () => {
@@ -136,7 +141,6 @@ export default function App() {
   const resetGame = () => {
     setGame(false);
     setSelected([]);
-    setTargets({});
     setScores({});
     setHistory([]);
     setActive(null);
@@ -307,39 +311,21 @@ export default function App() {
                   gap: 10
                 }}>
 
-                  {editingId === p.id ? (
-                    <>
-                      <input
-                        value={editingName}
-                        onChange={e => setEditingName(e.target.value)}
-                        style={{ flex: 1 }}
-                      />
-                      <button onClick={() => updatePlayer(p.id)}>💾</button>
-                    </>
-                  ) : (
-                    <>
-                      <div style={{ flex: 1 }}>{p.name}</div>
-                      <button onClick={() => {
-                        setEditingId(p.id);
-                        setEditingName(p.name);
-                      }}>✏️</button>
-                      <button onClick={() => deletePlayer(p.id)}>🗑</button>
-                    </>
-                  )}
+                  <div style={{ flex: 1 }}>{p.name}</div>
 
-                  {isSelected && (
-                    <input
-                      type="number"
-                      placeholder="🎯"
-                      onChange={e =>
-                        setTargets({
-                          ...targets,
-                          [p.id]: Number(e.target.value)
-                        })
-                      }
-                      style={{ width: 70 }}
-                    />
-                  )}
+                  {/* VASTE TARGET */}
+                  <input
+                    type="number"
+                    value={targets[p.id] || ""}
+                    placeholder="🎯"
+                    onChange={e =>
+                      setTargets({
+                        ...targets,
+                        [p.id]: Number(e.target.value)
+                      })
+                    }
+                    style={{ width: 70 }}
+                  />
 
                   <button onClick={() => togglePlayer(p)} style={{
                     background: isSelected ? "#22c55e" : "#334155",
@@ -363,55 +349,16 @@ export default function App() {
                 ▶️ Start match
               </button>
             )}
-
-            {/* GRID STATS */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 20,
-              marginTop: 30
-            }}>
-
-              <div>
-                <h3>🏆 Ranking</h3>
-                {ranking.map((p,i)=>(
-                  <div key={p.id}>{i+1}. {p.name} — {getStats(p).wins}W</div>
-                ))}
-              </div>
-
-              <div>
-                <h3>🔥 Hoogste score</h3>
-                {getHighScores().map((p,i)=>(
-                  <div key={i}>{i+1}. {p.name} — {p.score}</div>
-                ))}
-              </div>
-
-              <div>
-                <h3>🎯 Moyenne</h3>
-                {getMoyennes().map((p,i)=>(
-                  <div key={i}>{i+1}. {p.name} — {p.avg}</div>
-                ))}
-              </div>
-
-              <div>
-                <h3>🤝 Duels</h3>
-                {getHeadToHead().map((m,i)=>(
-                  <div key={i}>{m.p1} vs {m.p2} → {m.w1}-{m.w2}</div>
-                ))}
-              </div>
-
-            </div>
           </>
         )}
 
-        {/* GAME = ONGEWIJZIGD */}
+        {/* GAME */}
         {game && (
           <>
             <div style={{ display: "flex", gap: 10 }}>
               {selected.map(p => {
 
                 const playerHistory = history.filter(h => h.player === p.id);
-                const lastThree = playerHistory.slice(-3);
 
                 return (
                   <div key={p.id} style={{
@@ -432,10 +379,8 @@ export default function App() {
                       borderRadius: 6,
                       padding: 4
                     }}>
-                      {lastThree.map((h, i) => (
-                        <div key={i}>
-                          +{h.val}
-                        </div>
+                      {playerHistory.slice(-3).map((h, i) => (
+                        <div key={i}>+{h.val}</div>
                       ))}
                     </div>
 
