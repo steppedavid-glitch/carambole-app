@@ -400,38 +400,90 @@ return (
   {[
     {
       title: "🏆 Ranking",
-      content: ranking.map((p,i)=>(
-        <div key={p.id}>
-          {i+1}. {p.name} — {getStats(p).wins}W - {getStats(p).played - getStats(p).wins}V ({getStats(p).winRate}%)
+      content: ranking.map((p,i)=>{
+
+  const stats = getStats(p);
+
+  const bg =
+    i === 0 ? "linear-gradient(135deg,#facc15,#eab308)" :
+    i === 1 ? "linear-gradient(135deg,#e5e7eb,#9ca3af)" :
+    i === 2 ? "linear-gradient(135deg,#d97706,#92400e)" :
+    "#0f172a";
+
+  const color = i < 3 ? "#000000" : "#ffffff";
+
+  // 🔥 laatste 5 scores (vorm)
+  const recent = games
+    .filter(g => g.players.find(pl => pl.id === p.id))
+    .slice(-5)
+    .map(g => g.winner.id === p.id ? "W" : "V");
+
+  return (
+    <div key={p.id} style={{
+      padding: 12,
+      borderRadius: 12,
+      background: bg,
+      color: color,
+      marginBottom: 8,
+      boxShadow: "0 4px 12px rgba(0,0,0,0.4)"
+    }}>
+
+      {/* TOP LINE */}
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center"
+      }}>
+        <div style={{ fontWeight: "bold", fontSize: 16 }}>
+          {i === 0 && "👑 "}
+          {i+1}. {p.name}
         </div>
-      ))
-    },
-    {
-      title: "🔥 Hoogste score",
-      content: getHighScores().map((p,i)=>(
-        <div key={i}>{i+1}. {p.name} — {p.score}</div>
-      ))
-    },
-    {
-      title: "🎯 Moyenne",
-      content: getMoyennes().map((p,i)=>(
-        <div key={i}>{i+1}. {p.name} — {p.avg}</div>
-      ))
-    },
-    {
-      title: "🤝 Duels",
-      content: getHeadToHead().map((m,i)=>(
-        <div key={i}>{m.p1} vs {m.p2} → {m.w1}-{m.w2}</div>
-      ))
-    },
-    {
-      title: "🏁 Totaal Caramboles",
-      content: getTotalScores().map((p,i)=>(
-        <div key={i}>
-          {i+1}. {p.name} — {p.total}
+
+        <div style={{ fontSize: 14 }}>
+          {stats.wins}W - {stats.played - stats.wins}V
         </div>
-      ))
-    }
+      </div>
+
+      {/* WINRATE BAR */}
+      <div style={{
+        marginTop: 6,
+        background: "rgba(255,255,255,0.2)",
+        borderRadius: 6,
+        height: 8,
+        overflow: "hidden"
+      }}>
+        <div style={{
+          width: `${stats.winRate}%`,
+          background: i === 0 ? "#16a34a" : "#3b82f6",
+          height: "100%"
+        }} />
+      </div>
+
+      {/* BOTTOM LINE */}
+      <div style={{
+        marginTop: 6,
+        display: "flex",
+        justifyContent: "space-between",
+        fontSize: 12
+      }}>
+        <div>{stats.winRate}%</div>
+
+        {/* 🔥 vorm */}
+        <div style={{ display: "flex", gap: 4 }}>
+          {recent.map((r,idx)=>(
+            <span key={idx} style={{
+              color: r === "W" ? "#22c55e" : "#ef4444",
+              fontWeight: "bold"
+            }}>
+              {r}
+            </span>
+          ))}
+        </div>
+      </div>
+
+    </div>
+  );
+})
   ].map((card, index) => (
     <div key={index} style={{
       background: "linear-gradient(145deg,#1e293b,#0f172a)",
