@@ -388,7 +388,7 @@ return (
             </button>
           )}
 
-          {/* GRID STATS */}
+  {/* GRID STATS */}
 <div style={{
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))",
@@ -396,92 +396,94 @@ return (
   marginTop: 30
 }}>
 
-  {/* CARD STYLE */}
-  {[
-    {
-      title: "🏆 Ranking",
-      content: ranking.map((p,i)=>{
+  {/* 🏆 RANKING */}
+  <div style={{
+    background: "linear-gradient(145deg,#1e293b,#0f172a)",
+    padding: 18,
+    borderRadius: 18
+  }}>
 
-  const stats = getStats(p);
+    <h3 style={{marginBottom:10}}>🏆 Ranking</h3>
 
-  const bg =
-    i === 0 ? "linear-gradient(135deg,#facc15,#eab308)" :
-    i === 1 ? "linear-gradient(135deg,#e5e7eb,#9ca3af)" :
-    i === 2 ? "linear-gradient(135deg,#d97706,#92400e)" :
-    "#0f172a";
+    {ranking.map((p,i)=>{
 
-  const color = i < 3 ? "#000000" : "#ffffff";
+      const stats = getStats(p);
 
-  // 🔥 laatste 5 scores (vorm)
-  const recent = games
-    .filter(g => g.players.find(pl => pl.id === p.id))
-    .slice(-5)
-    .map(g => g.winner.id === p.id ? "W" : "V");
+      const bg =
+        i === 0 ? "linear-gradient(135deg,#facc15,#eab308)" :
+        i === 1 ? "linear-gradient(135deg,#e5e7eb,#9ca3af)" :
+        i === 2 ? "linear-gradient(135deg,#d97706,#92400e)" :
+        "#0f172a";
 
-  return (
-    <div key={p.id} style={{
-      padding: 12,
-      borderRadius: 12,
-      background: bg,
-      color: color,
-      marginBottom: 8,
-      boxShadow: "0 4px 12px rgba(0,0,0,0.4)"
-    }}>
+      const color = i < 3 ? "#000000" : "#ffffff";
 
-      {/* TOP LINE */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center"
-      }}>
-        <div style={{ fontWeight: "bold", fontSize: 16 }}>
-          {i === 0 && "👑 "}
-          {i+1}. {p.name}
+      const recent = games
+        .filter(g => g.players.find(pl => pl.id === p.id))
+        .slice(-5)
+        .map(g => g.winner.id === p.id ? "W" : "V");
+
+      return (
+        <div key={p.id} style={{
+          padding: 12,
+          borderRadius: 12,
+          background: bg,
+          color: color,
+          marginBottom: 8
+        }}>
+
+          <div style={{
+            display:"flex",
+            justifyContent:"space-between"
+          }}>
+            <div style={{fontWeight:"bold"}}>
+              {i === 0 && "👑 "}
+              {i+1}. {p.name}
+            </div>
+
+            <div>
+              {stats.wins}W - {stats.played - stats.wins}V
+            </div>
+          </div>
+
+          <div style={{
+            marginTop:6,
+            background:"rgba(255,255,255,0.2)",
+            height:6,
+            borderRadius:6
+          }}>
+            <div style={{
+              width:`${stats.winRate}%`,
+              background:"#22c55e",
+              height:"100%"
+            }} />
+          </div>
+
+          <div style={{
+            display:"flex",
+            justifyContent:"space-between",
+            fontSize:12,
+            marginTop:4
+          }}>
+            <div>{stats.winRate}%</div>
+
+            <div>
+              {recent.map((r,idx)=>(
+                <span key={idx} style={{
+                  color: r==="W" ? "#22c55e" : "#ef4444",
+                  marginLeft:4
+                }}>
+                  {r}
+                </span>
+              ))}
+            </div>
+          </div>
+
         </div>
+      );
+    })}
+  </div>
 
-        <div style={{ fontSize: 14 }}>
-          {stats.wins}W - {stats.played - stats.wins}V
-        </div>
-      </div>
-
-      {/* WINRATE BAR */}
-      <div style={{
-        marginTop: 6,
-        background: "rgba(255,255,255,0.2)",
-        borderRadius: 6,
-        height: 8,
-        overflow: "hidden"
-      }}>
-        <div style={{
-          width: `${stats.winRate}%`,
-          background: i === 0 ? "#16a34a" : "#3b82f6",
-          height: "100%"
-        }} />
-      </div>
-
-      {/* BOTTOM LINE */}
-      <div style={{
-        marginTop: 6,
-        display: "flex",
-        justifyContent: "space-between",
-        fontSize: 12
-      }}>
-        <div>{stats.winRate}%</div>
-
-        {/* 🔥 vorm */}
-        <div style={{ display: "flex", gap: 4 }}>
-          {recent.map((r,idx)=>(
-            <span key={idx} style={{
-              color: r === "W" ? "#22c55e" : "#ef4444",
-              fontWeight: "bold"
-            }}>
-              {r}
-            </span>
-          ))}
-        </div>
-      </div>
-
-    </div>
+</div>
   );
 })
   ].map((card, index) => (
