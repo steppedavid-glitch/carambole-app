@@ -237,165 +237,166 @@ export default function App() {
   };
 
   const ranking = [...players].sort(
-    (a, b) => getStats(b).wins - getStats(a).wins
-  );
+  (a, b) => getStats(b).winRate - getStats(a).winRate
+);
 
-  const btn = {
-    height: 55,
-    fontSize: 20,
-    borderRadius: 10,
-    width: "100%"
-  };
+const btn = {
+  height: 55,
+  fontSize: 20,
+  borderRadius: 10,
+  width: "100%"
+};
 
-  return (
-    <div style={{
-      minHeight: "100vh",
-      padding: 20,
-      background: "linear-gradient(135deg,#0f172a,#1e293b)",
-      color: "white",
-      display: "flex",
-      justifyContent: "center"
-    }}>
+return (
+  <div style={{
+    minHeight: "100vh",
+    padding: 20,
+    background: "linear-gradient(135deg,#0f172a,#1e293b)",
+    color: "white",
+    display: "flex",
+    justifyContent: "center"
+  }}>
 
-      <div style={{ width: "100%", maxWidth: 900 }}>
+    <div style={{ width: "100%", maxWidth: 900 }}>
 
-        {/* HEADER */}
-        <div style={{ textAlign: "center", marginBottom: 30 }}>
-          <div style={{
-            padding: "16px 32px",
-            borderRadius: 20,
-            background: "linear-gradient(135deg,#2563eb,#22c55e)",
-            fontSize: 28,
-            fontWeight: "bold",
-            boxShadow: "0 0 25px rgba(37,99,235,0.6)"
-          }}>
-            🎱 Carambole John, David & Bjarni
-          </div>
+      {/* HEADER */}
+      <div style={{ textAlign: "center", marginBottom: 30 }}>
+        <div style={{
+          padding: "16px 32px",
+          borderRadius: 20,
+          background: "linear-gradient(135deg,#2563eb,#22c55e)",
+          fontSize: 28,
+          fontWeight: "bold",
+          boxShadow: "0 0 25px rgba(37,99,235,0.6)"
+        }}>
+          🎱 Carambole John, David & Bjarni
         </div>
+      </div>
 
-        {!game && (
-          <>
-            {/* ADD */}
-            <div style={{
-              background: "#1e293b",
-              padding: 20,
-              borderRadius: 16,
-              marginBottom: 20,
-              display: "flex",
-              gap: 10
+      {!game && (
+        <>
+          {/* ADD */}
+          <div style={{
+            background: "#1e293b",
+            padding: 20,
+            borderRadius: 16,
+            marginBottom: 20,
+            display: "flex",
+            gap: 10
+          }}>
+            <input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Nieuwe speler"
+              style={{ flex: 1, padding: 12, borderRadius: 10 }}
+            />
+            <button onClick={addPlayer} style={{
+              background: "#22c55e",
+              padding: "10px 16px",
+              borderRadius: 10
+            }}>➕</button>
+          </div>
+
+          {/* PLAYERS */}
+          {players.map(p => {
+            const isSelected = selected.find(x => x.id === p.id);
+
+            return (
+              <div key={p.id} style={{
+                background: "#1e293b",
+                padding: 14,
+                borderRadius: 12,
+                marginBottom: 10,
+                display: "flex",
+                alignItems: "center",
+                gap: 10
+              }}>
+
+                {editingId === p.id ? (
+                  <>
+                    <input
+                      value={editingName}
+                      onChange={e => setEditingName(e.target.value)}
+                      style={{ flex: 1 }}
+                    />
+                    <button onClick={() => updatePlayer(p.id)}>💾</button>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ flex: 1 }}>{p.name}</div>
+                    <button onClick={() => {
+                      setEditingId(p.id);
+                      setEditingName(p.name);
+                    }}>✏️</button>
+                    <button onClick={() => deletePlayer(p.id)}>🗑</button>
+                  </>
+                )}
+
+                <input
+                  type="number"
+                  value={targets[p.id] || ""}
+                  placeholder="🎯"
+                  onChange={e =>
+                    setTargets({
+                      ...targets,
+                      [p.id]: Number(e.target.value)
+                    })
+                  }
+                  style={{ width: 70 }}
+                />
+
+                <button onClick={() => togglePlayer(p)} style={{
+                  background: isSelected ? "#22c55e" : "#334155",
+                  padding: "8px 12px",
+                  borderRadius: 8
+                }}>
+                  {isSelected ? "✓" : "Selecteer"}
+                </button>
+              </div>
+            );
+          })}
+
+          {selected.length >= 2 && (
+            <button onClick={startGame} style={{
+              width: "100%",
+              padding: 16,
+              marginTop: 20,
+              borderRadius: 12,
+              background: "#2563eb"
             }}>
-              <input
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="Nieuwe speler"
-                style={{ flex: 1, padding: 12, borderRadius: 10 }}
-              />
-              <button onClick={addPlayer} style={{
-                background: "#22c55e",
-                padding: "10px 16px",
-                borderRadius: 10
-              }}>➕</button>
+              ▶️ Start match
+            </button>
+          )}
+
+          {/* GRID STATS */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 20,
+            marginTop: 30
+          }}>
+            <div>
+              <h3>🏆 Ranking</h3>
+              {ranking.map((p,i)=>(
+                <div key={p.id}>
+                  {i+1}. {p.name} — {getStats(p).wins}W - {getStats(p).played - getStats(p).wins}V ({getStats(p).winRate}%)
+                </div>
+              ))}
             </div>
 
-            {/* PLAYERS */}
-            {players.map(p => {
-              const isSelected = selected.find(x => x.id === p.id);
+            <div>
+              <h3>🔥 Hoogste score</h3>
+              {getHighScores().map((p,i)=>(
+                <div key={i}>{i+1}. {p.name} — {p.score}</div>
+              ))}
+            </div>
 
-              return (
-                <div key={p.id} style={{
-                  background: "#1e293b",
-                  padding: 14,
-                  borderRadius: 12,
-                  marginBottom: 10,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10
-                }}>
-
-                  {editingId === p.id ? (
-                    <>
-                      <input
-                        value={editingName}
-                        onChange={e => setEditingName(e.target.value)}
-                        style={{ flex: 1 }}
-                      />
-                      <button onClick={() => updatePlayer(p.id)}>💾</button>
-                    </>
-                  ) : (
-                    <>
-                      <div style={{ flex: 1 }}>{p.name}</div>
-                      <button onClick={() => {
-                        setEditingId(p.id);
-                        setEditingName(p.name);
-                      }}>✏️</button>
-                      <button onClick={() => deletePlayer(p.id)}>🗑</button>
-                    </>
-                  )}
-
-                  {/* ✅ TARGET ALTijd zichtbaar */}
-                  <input
-                    type="number"
-                    value={targets[p.id] || ""}
-                    placeholder="🎯"
-                    onChange={e =>
-                      setTargets({
-                        ...targets,
-                        [p.id]: Number(e.target.value)
-                      })
-                    }
-                    style={{ width: 70 }}
-                  />
-
-                  <button onClick={() => togglePlayer(p)} style={{
-                    background: isSelected ? "#22c55e" : "#334155",
-                    padding: "8px 12px",
-                    borderRadius: 8
-                  }}>
-                    {isSelected ? "✓" : "Selecteer"}
-                  </button>
-                </div>
-              );
-            })}
-
-            {selected.length >= 2 && (
-              <button onClick={startGame} style={{
-                width: "100%",
-                padding: 16,
-                marginTop: 20,
-                borderRadius: 12,
-                background: "#2563eb"
-              }}>
-                ▶️ Start match
-              </button>
-            )}
-
-            {/* GRID STATS */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 20,
-              marginTop: 30
-            }}>
-              <div>
-                <h3>🏆 Ranking</h3>
-                {ranking.map((p,i)=>(
-                  <div key={p.id}>{i+1}. {p.name} — {getStats(p).wins}W</div>
-                ))}
-              </div>
-
-              <div>
-                <h3>🔥 Hoogste score</h3>
-                {getHighScores().map((p,i)=>(
-                  <div key={i}>{i+1}. {p.name} — {p.score}</div>
-                ))}
-              </div>
-
-              <div>
-                <h3>🎯 Moyenne</h3>
-                {getMoyennes().map((p,i)=>(
-                  <div key={i}>{i+1}. {p.name} — {p.avg}</div>
-                ))}
-              </div>
+            <div>
+              <h3>🎯 Moyenne</h3>
+              {getMoyennes().map((p,i)=>(
+                <div key={i}>{i+1}. {p.name} — {p.avg}</div>
+              ))}
+            </div>
 
               <div>
                 <h3>🤝 Duels</h3>
