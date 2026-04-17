@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 
 export default function App() {
 
+  // ---------- STATE ----------
   const [players, setPlayers] = useState([]);
   const [name, setName] = useState("");
 
@@ -73,7 +74,6 @@ export default function App() {
 
     const newHistory = [...history, { player: active, val }];
 
-    // WIN CHECK
     const winner = selected.find(p =>
       targets[p.id] && newScores[p.id] >= targets[p.id]
     );
@@ -81,15 +81,8 @@ export default function App() {
     if (winner) {
       setGames(prev => [...prev, { players: selected, winner }]);
 
-      // reset veilig NA update
       setTimeout(() => {
-        setGame(false);
-        setSelected([]);
-        setTargets({});
-        setScores({});
-        setHistory([]);
-        setActive(null);
-        setInput("");
+        resetGame();
       }, 50);
 
       return;
@@ -157,103 +150,165 @@ export default function App() {
       minHeight: "100vh",
       padding: 20,
       background: "linear-gradient(135deg,#0f172a,#1e293b)",
-      color: "white"
+      color: "white",
+      display: "flex",
+      justifyContent: "center"
     }}>
 
-      <h1 style={{ textAlign: "center" }}>🎱 Carambole Elite</h1>
+      <div style={{ width: "100%", maxWidth: 900 }}>
 
-      {!game && (
-        <>
-          {/* ADD */}
-          <div style={{ marginBottom: 20 }}>
-            <input value={name} onChange={e => setName(e.target.value)} />
-            <button onClick={addPlayer}>➕</button>
-          </div>
-
-          {/* PLAYERS */}
-          {players.map(p => (
-            <div key={p.id} style={{ marginBottom: 10 }}>
-              <button onClick={() => togglePlayer(p)}>
-                {p.name}
-              </button>
-
-              {selected.find(x => x.id === p.id) && (
-                <input
-                  type="number"
-                  placeholder="Target"
-                  onChange={e =>
-                    setTargets({
-                      ...targets,
-                      [p.id]: Number(e.target.value)
-                    })
-                  }
-                />
-              )}
-            </div>
-          ))}
-
-          {selected.length >= 2 && (
-            <button onClick={startGame}>Start match</button>
-          )}
-
-          {/* RANKING */}
-          <h3>🏆 Ranking</h3>
-          {ranking.map((p,i)=>{
-            const s = getStats(p);
-            return (
-              <div key={p.id}>
-                {i+1}. {p.name} — {s.wins}W ({s.winRate}%)
-              </div>
-            );
-          })}
-        </>
-      )}
-
-      {game && (
-        <>
-          {/* SCORE */}
-          <div style={{ display: "flex", gap: 10 }}>
-            {selected.map(p => (
-              <div key={p.id} style={{
-                flex: 1,
-                padding: 10,
-                borderRadius: 10,
-                background: active === p.id ? "#22c55e" : "#1e293b"
-              }}>
-                {p.name}
-                <div style={{ fontSize: 28 }}>{scores[p.id]}</div>
-                <div>/ {targets[p.id]}</div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ textAlign: "center", fontSize: 32 }}>
-            {input || 0}
-          </div>
-
-          {/* KEYPAD */}
+        {/* HEADER */}
+        <div style={{ textAlign: "center", marginBottom: 30 }}>
           <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3,1fr)",
-            gap: 8
+            padding: "16px 32px",
+            borderRadius: 20,
+            background: "linear-gradient(135deg,#2563eb,#22c55e)",
+            fontSize: 28,
+            fontWeight: "bold",
+            boxShadow: "0 0 25px rgba(37,99,235,0.6)"
           }}>
-            {[1,2,3,4,5,6,7,8,9].map(n => (
-              <button key={n} style={btn} onClick={()=>setInput(v=>v+n)}>{n}</button>
-            ))}
-
-            <button style={{...btn, background:"#facc15"}} onClick={()=>setInput("")}>C</button>
-            <button style={btn} onClick={()=>setInput(v=>v+"0")}>0</button>
-            <button style={{...btn, background:"#22c55e"}} onClick={submitScore}>OK</button>
-
-            <button style={{...btn, background:"#ef4444"}} onClick={undo}>Undo</button>
-            <button style={{...btn, background:"#3b82f6"}} onClick={()=>{
-              const idx = selected.findIndex(p => p.id === active);
-              setActive(selected[(idx + 1) % selected.length].id);
-            }}>Beurt</button>
-            <button style={{...btn, background:"#6b7280"}} onClick={resetGame}>New</button>
+            🎱 Carambole Elite
           </div>
-        </>
-      )}
+        </div>
+
+        {/* START SCREEN */}
+        {!game && (
+          <>
+            {/* ADD */}
+            <div style={{
+              background: "#1e293b",
+              padding: 20,
+              borderRadius: 16,
+              marginBottom: 20,
+              display: "flex",
+              gap: 10
+            }}>
+              <input
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Nieuwe speler"
+                style={{ flex: 1, padding: 12, borderRadius: 10 }}
+              />
+              <button onClick={addPlayer} style={{
+                background: "#22c55e",
+                padding: "10px 16px",
+                borderRadius: 10
+              }}>➕</button>
+            </div>
+
+            {/* PLAYERS */}
+            {players.map(p => {
+              const isSelected = selected.find(x => x.id === p.id);
+
+              return (
+                <div key={p.id} style={{
+                  background: "#1e293b",
+                  padding: 14,
+                  borderRadius: 12,
+                  marginBottom: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10
+                }}>
+                  <div style={{ flex: 1 }}>{p.name}</div>
+
+                  {isSelected && (
+                    <input
+                      type="number"
+                      placeholder="🎯"
+                      onChange={e =>
+                        setTargets({
+                          ...targets,
+                          [p.id]: Number(e.target.value)
+                        })
+                      }
+                      style={{ width: 70 }}
+                    />
+                  )}
+
+                  <button onClick={() => togglePlayer(p)} style={{
+                    background: isSelected ? "#22c55e" : "#334155",
+                    padding: "8px 12px",
+                    borderRadius: 8
+                  }}>
+                    {isSelected ? "✓" : "Selecteer"}
+                  </button>
+                </div>
+              );
+            })}
+
+            {selected.length >= 2 && (
+              <button onClick={startGame} style={{
+                width: "100%",
+                padding: 16,
+                marginTop: 20,
+                borderRadius: 12,
+                background: "#2563eb"
+              }}>
+                ▶️ Start match
+              </button>
+            )}
+
+            {/* RANKING */}
+            <h3 style={{ marginTop: 30 }}>🏆 Ranking</h3>
+            {ranking.map((p,i)=>{
+              const s = getStats(p);
+              return (
+                <div key={p.id}>
+                  {i+1}. {p.name} — {s.wins}W ({s.winRate}%)
+                </div>
+              );
+            })}
+          </>
+        )}
+
+        {/* GAME */}
+        {game && (
+          <>
+            <div style={{ display: "flex", gap: 10 }}>
+              {selected.map(p => (
+                <div key={p.id} style={{
+                  flex: 1,
+                  padding: 10,
+                  borderRadius: 10,
+                  background: active === p.id ? "#22c55e" : "#1e293b"
+                }}>
+                  {p.name}
+                  <div style={{ fontSize: 28 }}>{scores[p.id]}</div>
+                  <div>/ {targets[p.id]}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ textAlign: "center", fontSize: 32 }}>
+              {input || 0}
+            </div>
+
+            {/* KEYPAD */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3,1fr)",
+              gap: 8
+            }}>
+              {[1,2,3,4,5,6,7,8,9].map(n => (
+                <button key={n} style={btn} onClick={()=>setInput(v=>v+n)}>{n}</button>
+              ))}
+
+              <button style={{...btn, background:"#facc15"}} onClick={()=>setInput("")}>C</button>
+              <button style={btn} onClick={()=>setInput(v=>v+"0")}>0</button>
+              <button style={{...btn, background:"#22c55e"}} onClick={submitScore}>OK</button>
+
+              <button style={{...btn, background:"#ef4444"}} onClick={undo}>Undo</button>
+              <button style={{...btn, background:"#3b82f6"}} onClick={()=>{
+                const idx = selected.findIndex(p => p.id === active);
+                setActive(selected[(idx + 1) % selected.length].id);
+              }}>Beurt</button>
+              <button style={{...btn, background:"#6b7280"}} onClick={resetGame}>New</button>
+            </div>
+          </>
+        )}
+
+      </div>
     </div>
   );
 }
