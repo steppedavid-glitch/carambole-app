@@ -6,6 +6,9 @@ export default function App() {
   const [players, setPlayers] = useState([]);
   const [name, setName] = useState("");
 
+  const [editingId, setEditingId] = useState(null);
+  const [editingName, setEditingName] = useState("");
+
   const [selected, setSelected] = useState([]);
   const [targets, setTargets] = useState({});
 
@@ -39,6 +42,22 @@ export default function App() {
 
     setPlayers(prev => [...prev, { id: crypto.randomUUID(), name }]);
     setName("");
+  };
+
+  const updatePlayer = (id) => {
+    setPlayers(prev =>
+      prev.map(p =>
+        p.id === id ? { ...p, name: editingName } : p
+      )
+    );
+    setEditingId(null);
+  };
+
+  const deletePlayer = (id) => {
+    setPlayers(prev => prev.filter(p => p.id !== id));
+    setGames(prev =>
+      prev.filter(g => !g.players.find(p => p.id === id))
+    );
   };
 
   const togglePlayer = (p) => {
@@ -141,7 +160,6 @@ export default function App() {
     };
   };
 
-  // ---------- HEAD TO HEAD ----------
   const getHeadToHead = () => {
     const results = {};
 
@@ -162,7 +180,6 @@ export default function App() {
     return Object.values(results);
   };
 
-  // ---------- HIGH SCORE ----------
   const getHighScores = () => {
     const scoresMap = {};
 
@@ -183,7 +200,6 @@ export default function App() {
     .sort((a, b) => b.score - a.score);
   };
 
-  // ---------- MOYENNE ----------
   const getMoyennes = () => {
     const stats = {};
 
@@ -248,13 +264,13 @@ export default function App() {
             fontWeight: "bold",
             boxShadow: "0 0 25px rgba(37,99,235,0.6)"
           }}>
-            🎱 Carambole John, David & Bjarni
+            🎱 Carambole Elite
           </div>
         </div>
 
-        {/* START SCREEN */}
         {!game && (
           <>
+            {/* ADD */}
             <div style={{
               background: "#1e293b",
               padding: 20,
@@ -276,6 +292,7 @@ export default function App() {
               }}>➕</button>
             </div>
 
+            {/* PLAYERS */}
             {players.map(p => {
               const isSelected = selected.find(x => x.id === p.id);
 
@@ -289,7 +306,26 @@ export default function App() {
                   alignItems: "center",
                   gap: 10
                 }}>
-                  <div style={{ flex: 1 }}>{p.name}</div>
+
+                  {editingId === p.id ? (
+                    <>
+                      <input
+                        value={editingName}
+                        onChange={e => setEditingName(e.target.value)}
+                        style={{ flex: 1 }}
+                      />
+                      <button onClick={() => updatePlayer(p.id)}>💾</button>
+                    </>
+                  ) : (
+                    <>
+                      <div style={{ flex: 1 }}>{p.name}</div>
+                      <button onClick={() => {
+                        setEditingId(p.id);
+                        setEditingName(p.name);
+                      }}>✏️</button>
+                      <button onClick={() => deletePlayer(p.id)}>🗑</button>
+                    </>
+                  )}
 
                   {isSelected && (
                     <input
@@ -328,40 +364,47 @@ export default function App() {
               </button>
             )}
 
-            <h3 style={{ marginTop: 30 }}>🏆 Ranking</h3>
-            {ranking.map((p,i)=>{
-              const s = getStats(p);
-              return (
-                <div key={p.id}>
-                  {i+1}. {p.name} — {s.wins}W ({s.winRate}%)
-                </div>
-              );
-            })}
+            {/* GRID STATS */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 20,
+              marginTop: 30
+            }}>
 
-            <h3 style={{ marginTop: 30 }}>🔥 Hoogste score (1 beurt)</h3>
-            {getHighScores().map((p, i) => (
-              <div key={i}>
-                {i+1}. {p.name} — {p.score}
+              <div>
+                <h3>🏆 Ranking</h3>
+                {ranking.map((p,i)=>(
+                  <div key={p.id}>{i+1}. {p.name} — {getStats(p).wins}W</div>
+                ))}
               </div>
-            ))}
 
-            <h3 style={{ marginTop: 30 }}>🎯 Gemiddelde per beurt</h3>
-            {getMoyennes().map((p, i) => (
-              <div key={i}>
-                {i+1}. {p.name} — {p.avg}
+              <div>
+                <h3>🔥 Hoogste score</h3>
+                {getHighScores().map((p,i)=>(
+                  <div key={i}>{i+1}. {p.name} — {p.score}</div>
+                ))}
               </div>
-            ))}
 
-            <h3 style={{ marginTop: 30 }}>🤝 Onderlinge duels</h3>
-            {getHeadToHead().map((m, i) => (
-              <div key={i}>
-                {m.p1} vs {m.p2} → {m.w1} - {m.w2}
+              <div>
+                <h3>🎯 Moyenne</h3>
+                {getMoyennes().map((p,i)=>(
+                  <div key={i}>{i+1}. {p.name} — {p.avg}</div>
+                ))}
               </div>
-            ))}
+
+              <div>
+                <h3>🤝 Duels</h3>
+                {getHeadToHead().map((m,i)=>(
+                  <div key={i}>{m.p1} vs {m.p2} → {m.w1}-{m.w2}</div>
+                ))}
+              </div>
+
+            </div>
           </>
         )}
 
-        {/* GAME */}
+        {/* GAME = ONGEWIJZIGD */}
         {game && (
           <>
             <div style={{ display: "flex", gap: 10 }}>
