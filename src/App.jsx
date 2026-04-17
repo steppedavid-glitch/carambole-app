@@ -134,7 +134,7 @@ export default function App() {
     };
   };
 
-  // ---------- HEAD TO HEAD ----------
+  // ---------- HEAD TO HEAD (NIEUW) ----------
   const getHeadToHead = () => {
     const results = {};
 
@@ -142,7 +142,6 @@ export default function App() {
       if (g.players.length !== 2) return;
 
       const [p1, p2] = g.players;
-
       const key = [p1.name, p2.name].sort().join(" vs ");
 
       if (!results[key]) {
@@ -179,15 +178,43 @@ export default function App() {
 
       <div style={{ width: "100%", maxWidth: 900 }}>
 
-        <h1 style={{ textAlign: "center" }}>🎱 Carambole Elite</h1>
+        {/* HEADER */}
+        <div style={{ textAlign: "center", marginBottom: 30 }}>
+          <div style={{
+            padding: "16px 32px",
+            borderRadius: 20,
+            background: "linear-gradient(135deg,#2563eb,#22c55e)",
+            fontSize: 28,
+            fontWeight: "bold",
+            boxShadow: "0 0 25px rgba(37,99,235,0.6)"
+          }}>
+            🎱 Carambole Elite
+          </div>
+        </div>
 
-        {/* START */}
+        {/* START SCREEN */}
         {!game && (
           <>
             {/* ADD */}
-            <div style={{ marginBottom: 20 }}>
-              <input value={name} onChange={e => setName(e.target.value)} />
-              <button onClick={addPlayer}>➕</button>
+            <div style={{
+              background: "#1e293b",
+              padding: 20,
+              borderRadius: 16,
+              marginBottom: 20,
+              display: "flex",
+              gap: 10
+            }}>
+              <input
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Nieuwe speler"
+                style={{ flex: 1, padding: 12, borderRadius: 10 }}
+              />
+              <button onClick={addPlayer} style={{
+                background: "#22c55e",
+                padding: "10px 16px",
+                borderRadius: 10
+              }}>➕</button>
             </div>
 
             {/* PLAYERS */}
@@ -195,10 +222,16 @@ export default function App() {
               const isSelected = selected.find(x => x.id === p.id);
 
               return (
-                <div key={p.id} style={{ marginBottom: 10 }}>
-                  <button onClick={() => togglePlayer(p)}>
-                    {p.name}
-                  </button>
+                <div key={p.id} style={{
+                  background: "#1e293b",
+                  padding: 14,
+                  borderRadius: 12,
+                  marginBottom: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10
+                }}>
+                  <div style={{ flex: 1 }}>{p.name}</div>
 
                   {isSelected && (
                     <input
@@ -210,18 +243,35 @@ export default function App() {
                           [p.id]: Number(e.target.value)
                         })
                       }
+                      style={{ width: 70 }}
                     />
                   )}
+
+                  <button onClick={() => togglePlayer(p)} style={{
+                    background: isSelected ? "#22c55e" : "#334155",
+                    padding: "8px 12px",
+                    borderRadius: 8
+                  }}>
+                    {isSelected ? "✓" : "Selecteer"}
+                  </button>
                 </div>
               );
             })}
 
             {selected.length >= 2 && (
-              <button onClick={startGame}>Start match</button>
+              <button onClick={startGame} style={{
+                width: "100%",
+                padding: 16,
+                marginTop: 20,
+                borderRadius: 12,
+                background: "#2563eb"
+              }}>
+                ▶️ Start match
+              </button>
             )}
 
             {/* RANKING */}
-            <h3>🏆 Ranking</h3>
+            <h3 style={{ marginTop: 30 }}>🏆 Ranking</h3>
             {ranking.map((p,i)=>{
               const s = getStats(p);
               return (
@@ -231,8 +281,8 @@ export default function App() {
               );
             })}
 
-            {/* HEAD TO HEAD */}
-            <h3>🤝 Onderlinge duels</h3>
+            {/* HEAD TO HEAD (NIEUW) */}
+            <h3 style={{ marginTop: 30 }}>🤝 Onderlinge duels</h3>
             {getHeadToHead().map((m, i) => (
               <div key={i}>
                 {m.p1} vs {m.p2} → {m.w1} - {m.w2}
@@ -263,6 +313,7 @@ export default function App() {
               {input || 0}
             </div>
 
+            {/* KEYPAD */}
             <div style={{
               display: "grid",
               gridTemplateColumns: "repeat(3,1fr)",
