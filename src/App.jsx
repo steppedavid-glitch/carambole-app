@@ -269,7 +269,7 @@ return (
           fontWeight: "bold",
           boxShadow: "0 0 25px rgba(37,99,235,0.6)"
         }}>
-          🎱 Carambole John, David, Bjarni & Friends
+          🎱 Carambole John, David & Bjarni
         </div>
       </div>
 
@@ -435,8 +435,9 @@ return (
                         : "white"
                   }}>
                     {p.name}
-                    <div style={{ fontSize: 28 }}>{scores[p.id]}</div>
-                    <div>/ {targets[p.id]}</div>
+<div style={{ fontSize: 36, fontWeight: "bold" }}>
+  {scores[p.id]} / {targets[p.id]}
+</div>
 
                     <div style={{
                       marginTop: 6,
@@ -462,23 +463,55 @@ return (
               {input || 0}
             </div>
 
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3,1fr)",
-              gap: 8
-            }}>
-              {[1,2,3,4,5,6,7,8,9].map(n => (
-                <button key={n} style={btn} onClick={()=>setInput(v=>v+n)}>{n}</button>
-              ))}
+           <div style={{
+  display: "grid",
+  gridTemplateColumns: "repeat(4,1fr)",
+  gap: 8
+}}>
+  {[1,2,3,4,5,6,7,8,9].map(n => (
+    <button 
+      key={n} 
+      style={{...btn, fontSize: 24, fontWeight: "bold"}} 
+      onClick={()=>setInput(v=>v+n)}
+    >
+      {n}
+    </button>
+  ))}
 
-              <button style={{...btn, background:"#facc15"}} onClick={()=>setInput("")}>C</button>
-              <button style={btn} onClick={()=>setInput(v=>v+"0")}>0</button>
-              <button style={{...btn, background:"#22c55e"}} onClick={submitScore}>OK</button>
+  <button 
+    style={{...btn, background:"#facc15", fontWeight:"bold"}} 
+    onClick={()=>setInput("")}
+  >
+    C
+  </button>
 
-              <button style={{...btn, background:"#ef4444"}} onClick={undo}>Undo</button>
-              <button style={{...btn, background:"#be185d", color:"#ffffff"}} onClick={()=>setActive(selected[(selected.findIndex(p => p.id === active)+1)%selected.length].id)}>Beurt</button>
-              <button style={{...btn, background:"#6b7280"}} onClick={resetGame}>New</button>
-            </div>
+  <button 
+    style={{...btn, fontSize: 24, fontWeight:"bold"}} 
+    onClick={()=>setInput(v=>v+"0")}
+  >
+    0
+  </button>
+
+  {/* OK knop groot en rechts */}
+  <button 
+    style={{
+      ...btn,
+      background:"#22c55e",
+      gridColumn: "4",
+      gridRow: "1 / span 4",
+      height: "100%",
+      fontSize: 24,
+      fontWeight: "bold"
+    }} 
+    onClick={submitScore}
+  >
+    OK
+  </button>
+
+  <button style={{...btn, background:"#ef4444"}} onClick={undo}>Undo</button>
+  <button style={{...btn, background:"#be185d", color:"#ffffff"}} onClick={()=>setActive(selected[(selected.findIndex(p => p.id === active)+1)%selected.length].id)}>Beurt</button>
+  <button style={{...btn, background:"#6b7280"}} onClick={resetGame}>New</button>
+</div>
           </>
         )}
 
