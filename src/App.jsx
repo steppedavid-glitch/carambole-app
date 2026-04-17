@@ -389,50 +389,76 @@ return (
           )}
 
           {/* GRID STATS */}
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            gap: 20,
-            marginTop: 30
-          }}>
-            <div>
-              <h3>🏆 Ranking</h3>
-              {ranking.map((p,i)=>(
-                <div key={p.id}>
-                  {i+1}. {p.name} — {getStats(p).wins}W - {getStats(p).played - getStats(p).wins}V ({getStats(p).winRate}%)
-                </div>
-              ))}
-            </div>
+<div style={{
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))",
+  gap: 20,
+  marginTop: 30
+}}>
 
-            <div>
-              <h3>🔥 Hoogste score</h3>
-              {getHighScores().map((p,i)=>(
-                <div key={i}>{i+1}. {p.name} — {p.score}</div>
-              ))}
-            </div>
+  {/* CARD STYLE */}
+  {[
+    {
+      title: "🏆 Ranking",
+      content: ranking.map((p,i)=>(
+        <div key={p.id}>
+          {i+1}. {p.name} — {getStats(p).wins}W - {getStats(p).played - getStats(p).wins}V ({getStats(p).winRate}%)
+        </div>
+      ))
+    },
+    {
+      title: "🔥 Hoogste score",
+      content: getHighScores().map((p,i)=>(
+        <div key={i}>{i+1}. {p.name} — {p.score}</div>
+      ))
+    },
+    {
+      title: "🎯 Moyenne",
+      content: getMoyennes().map((p,i)=>(
+        <div key={i}>{i+1}. {p.name} — {p.avg}</div>
+      ))
+    },
+    {
+      title: "🤝 Duels",
+      content: getHeadToHead().map((m,i)=>(
+        <div key={i}>{m.p1} vs {m.p2} → {m.w1}-{m.w2}</div>
+      ))
+    },
+    {
+      title: "🏁 Totaal Caramboles",
+      content: getTotalScores().map((p,i)=>(
+        <div key={i}>
+          {i+1}. {p.name} — {p.total}
+        </div>
+      ))
+    }
+  ].map((card, index) => (
+    <div key={index} style={{
+      background: "linear-gradient(145deg,#1e293b,#0f172a)",
+      padding: 18,
+      borderRadius: 18,
+      boxShadow: "0 8px 25px rgba(0,0,0,0.4)",
+      border: "1px solid rgba(255,255,255,0.05)"
+    }}>
+      <h3 style={{
+        marginBottom: 10,
+        fontSize: 18,
+        fontWeight: "bold",
+        color: "#38bdf8"
+      }}>
+        {card.title}
+      </h3>
 
-            <div>
-              <h3>🎯 Moyenne</h3>
-              {getMoyennes().map((p,i)=>(
-                <div key={i}>{i+1}. {p.name} — {p.avg}</div>
-              ))}
-            </div>
-
-             <div>
-  <h3>🤝 Duels</h3>
-  {getHeadToHead().map((m,i)=>(
-    <div key={i}>{m.p1} vs {m.p2} → {m.w1}-{m.w2}</div>
-  ))}
-</div>
-
-<div>
-  <h3>🏁 Totaal Caramboles</h3>
-  {getTotalScores().map((p,i)=>(
-    <div key={i}>
-      {i+1}. {p.name} — {p.total}
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 6,
+        fontSize: 14
+      }}>
+        {card.content}
+      </div>
     </div>
   ))}
-</div>
 
 </div>
           </>
