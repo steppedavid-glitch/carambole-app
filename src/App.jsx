@@ -248,7 +248,7 @@ export default function App() {
             fontWeight: "bold",
             boxShadow: "0 0 25px rgba(37,99,235,0.6)"
           }}>
-            🎱 Carambole Elite
+            🎱 Carambole John, David & Bjarni
           </div>
         </div>
 
