@@ -26,7 +26,7 @@ export default function App() {
   useEffect(() => {
     setPlayers(JSON.parse(localStorage.getItem("players")) || []);
     setGames(JSON.parse(localStorage.getItem("games")) || []);
-    setTargets(JSON.parse(localStorage.getItem("targets")) || {});
+    setTargets(JSON.parse(localStorage.getItem("targets")) || {}); // ✅ toegevoegd
   }, []);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function App() {
   }, [games]);
 
   useEffect(() => {
-    localStorage.setItem("targets", JSON.stringify(targets));
+    localStorage.setItem("targets", JSON.stringify(targets)); // ✅ toegevoegd
   }, [targets]);
 
   // ---------- PLAYER ----------
@@ -141,6 +141,7 @@ export default function App() {
   const resetGame = () => {
     setGame(false);
     setSelected([]);
+    // ❌ targets NIET meer resetten
     setScores({});
     setHistory([]);
     setActive(null);
@@ -313,7 +314,7 @@ export default function App() {
 
                   <div style={{ flex: 1 }}>{p.name}</div>
 
-                  {/* VASTE TARGET */}
+                  {/* ✅ VASTE TARGET */}
                   <input
                     type="number"
                     value={targets[p.id] || ""}
@@ -337,83 +338,3 @@ export default function App() {
                 </div>
               );
             })}
-
-            {selected.length >= 2 && (
-              <button onClick={startGame} style={{
-                width: "100%",
-                padding: 16,
-                marginTop: 20,
-                borderRadius: 12,
-                background: "#2563eb"
-              }}>
-                ▶️ Start match
-              </button>
-            )}
-          </>
-        )}
-
-        {/* GAME */}
-        {game && (
-          <>
-            <div style={{ display: "flex", gap: 10 }}>
-              {selected.map(p => {
-
-                const playerHistory = history.filter(h => h.player === p.id);
-
-                return (
-                  <div key={p.id} style={{
-                    flex: 1,
-                    padding: 10,
-                    borderRadius: 10,
-                    background: active === p.id ? "#22c55e" : "#1e293b"
-                  }}>
-                    {p.name}
-                    <div style={{ fontSize: 28 }}>{scores[p.id]}</div>
-                    <div>/ {targets[p.id]}</div>
-
-                    <div style={{
-                      marginTop: 6,
-                      maxHeight: 80,
-                      overflowY: "auto",
-                      background: "rgba(0,0,0,0.2)",
-                      borderRadius: 6,
-                      padding: 4
-                    }}>
-                      {playerHistory.slice(-3).map((h, i) => (
-                        <div key={i}>+{h.val}</div>
-                      ))}
-                    </div>
-
-                  </div>
-                );
-              })}
-            </div>
-
-            <div style={{ textAlign: "center", fontSize: 32 }}>
-              {input || 0}
-            </div>
-
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3,1fr)",
-              gap: 8
-            }}>
-              {[1,2,3,4,5,6,7,8,9].map(n => (
-                <button key={n} style={btn} onClick={()=>setInput(v=>v+n)}>{n}</button>
-              ))}
-
-              <button style={{...btn, background:"#facc15"}} onClick={()=>setInput("")}>C</button>
-              <button style={btn} onClick={()=>setInput(v=>v+"0")}>0</button>
-              <button style={{...btn, background:"#22c55e"}} onClick={submitScore}>OK</button>
-
-              <button style={{...btn, background:"#ef4444"}} onClick={undo}>Undo</button>
-              <button style={{...btn, background:"#3b82f6"}} onClick={()=>setActive(selected[(selected.findIndex(p => p.id === active)+1)%selected.length].id)}>Beurt</button>
-              <button style={{...btn, background:"#6b7280"}} onClick={resetGame}>New</button>
-            </div>
-          </>
-        )}
-
-      </div>
-    </div>
-  );
-}
