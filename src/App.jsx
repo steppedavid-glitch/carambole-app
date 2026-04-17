@@ -404,82 +404,84 @@ return (
 
     <h3 style={{marginBottom:10}}>🏆 Ranking</h3>
 
-    {ranking.map((p,i)=>{
+    {ranking.map((p,i)=>(
+      (() => {
+        const stats = getStats(p);
 
-      const stats = getStats(p);
+        const bg =
+          i === 0 ? "linear-gradient(135deg,#facc15,#eab308)" :
+          i === 1 ? "linear-gradient(135deg,#e5e7eb,#9ca3af)" :
+          i === 2 ? "linear-gradient(135deg,#d97706,#92400e)" :
+          "#0f172a";
 
-      const bg =
-        i === 0 ? "linear-gradient(135deg,#facc15,#eab308)" :
-        i === 1 ? "linear-gradient(135deg,#e5e7eb,#9ca3af)" :
-        i === 2 ? "linear-gradient(135deg,#d97706,#92400e)" :
-        "#0f172a";
+        const color = i < 3 ? "#000000" : "#ffffff";
 
-      const color = i < 3 ? "#000000" : "#ffffff";
+        const recent = games
+          .filter(g => g.players.find(pl => pl.id === p.id))
+          .slice(-5)
+          .map(g => g.winner.id === p.id ? "W" : "V");
 
-      const recent = games
-        .filter(g => g.players.find(pl => pl.id === p.id))
-        .slice(-5)
-        .map(g => g.winner.id === p.id ? "W" : "V");
-
-      return (
-        <div key={p.id} style={{
-          padding: 12,
-          borderRadius: 12,
-          background: bg,
-          color: color,
-          marginBottom: 8
-        }}>
-
-          <div style={{
-            display:"flex",
-            justifyContent:"space-between"
+        return (
+          <div key={p.id} style={{
+            padding: 12,
+            borderRadius: 12,
+            background: bg,
+            color: color,
+            marginBottom: 8
           }}>
-            <div style={{fontWeight:"bold"}}>
-              {i === 0 && "👑 "}
-              {i+1}. {p.name}
-            </div>
 
-            <div>
-              {stats.wins}W - {stats.played - stats.wins}V
-            </div>
-          </div>
-
-          <div style={{
-            marginTop:6,
-            background:"rgba(255,255,255,0.2)",
-            height:6,
-            borderRadius:6
-          }}>
             <div style={{
-              width:`${stats.winRate}%`,
-              background:"#22c55e",
-              height:"100%"
-            }} />
-          </div>
+              display:"flex",
+              justifyContent:"space-between"
+            }}>
+              <div style={{fontWeight:"bold"}}>
+                {i === 0 && "👑 "}
+                {i+1}. {p.name}
+              </div>
 
-          <div style={{
-            display:"flex",
-            justifyContent:"space-between",
-            fontSize:12,
-            marginTop:4
-          }}>
-            <div>{stats.winRate}%</div>
-
-            <div>
-              {recent.map((r,idx)=>(
-                <span key={idx} style={{
-                  color: r==="W" ? "#22c55e" : "#ef4444",
-                  marginLeft:4
-                }}>
-                  {r}
-                </span>
-              ))}
+              <div>
+                {stats.wins}W - {stats.played - stats.wins}V
+              </div>
             </div>
-          </div>
 
-        </div>
-      );
-    })}
+            <div style={{
+              marginTop:6,
+              background:"rgba(255,255,255,0.2)",
+              height:6,
+              borderRadius:6
+            }}>
+              <div style={{
+                width:`${stats.winRate}%`,
+                background:"#22c55e",
+                height:"100%"
+              }} />
+            </div>
+
+            <div style={{
+              display:"flex",
+              justifyContent:"space-between",
+              fontSize:12,
+              marginTop:4
+            }}>
+              <div>{stats.winRate}%</div>
+
+              <div>
+                {recent.map((r,idx)=>(
+                  <span key={idx} style={{
+                    color: r==="W" ? "#22c55e" : "#ef4444",
+                    marginLeft:4
+                  }}>
+                    {r}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        );
+      })()
+    ))}
+    
   </div>
 
 </div>
