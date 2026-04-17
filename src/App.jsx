@@ -369,7 +369,7 @@ export default function App() {
               </button>
             )}
 
-            {/* GRID STATS (ONGEWIJZIGD) */}
+            {/* GRID STATS */}
             <div style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
@@ -437,7 +437,6 @@ export default function App() {
                     <div style={{ fontSize: 28 }}>{scores[p.id]}</div>
                     <div>/ {targets[p.id]}</div>
 
-                    {/* ✅ MAX 3 + SCROLL */}
                     <div style={{
                       marginTop: 6,
                       maxHeight: 80,
@@ -476,7 +475,7 @@ export default function App() {
               <button style={{...btn, background:"#22c55e"}} onClick={submitScore}>OK</button>
 
               <button style={{...btn, background:"#ef4444"}} onClick={undo}>Undo</button>
-              <button style={{...btn, background:"#3b82f6"}} onClick={()=>setActive(selected[(selected.findIndex(p => p.id === active)+1)%selected.length].id)}>Beurt</button>
+              <button style={{...btn, background:"#be185d", color:"#ffffff"}} onClick={()=>setActive(selected[(selected.findIndex(p => p.id === active)+1)%selected.length].id)}>Beurt</button>
               <button style={{...btn, background:"#6b7280"}} onClick={resetGame}>New</button>
             </div>
           </>
