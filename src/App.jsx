@@ -378,10 +378,11 @@ export default function App() {
             }}>
               <div>
                 <h3>🏆 Ranking</h3>
-                {ranking.map((p,i)=>(
-                  <div key={p.id}>
-  {i+1}. {p.name} — {getStats(p).wins}W - {getStats(p).played - getStats(p).wins}V ({getStats(p).winRate}%)
-</div>
+{ranking.map((p,i)=>(
+  <div key={p.id}>
+    {i+1}. {p.name} — {getStats(p).wins}W - {getStats(p).played - getStats(p).wins}V ({getStats(p).winRate}%)
+  </div>
+))}
 
               <div>
                 <h3>🔥 Hoogste score</h3>
