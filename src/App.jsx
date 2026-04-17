@@ -26,6 +26,7 @@ export default function App() {
   useEffect(() => {
     setPlayers(JSON.parse(localStorage.getItem("players")) || []);
     setGames(JSON.parse(localStorage.getItem("games")) || []);
+    setTargets(JSON.parse(localStorage.getItem("targets")) || {}); // ✅ toegevoegd
   }, []);
 
   useEffect(() => {
@@ -35,6 +36,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("games", JSON.stringify(games));
   }, [games]);
+
+  useEffect(() => {
+    localStorage.setItem("targets", JSON.stringify(targets)); // ✅ toegevoegd
+  }, [targets]);
 
   // ---------- PLAYER ----------
   const addPlayer = () => {
@@ -136,7 +141,7 @@ export default function App() {
   const resetGame = () => {
     setGame(false);
     setSelected([]);
-    setTargets({});
+    // setTargets({}); ❌ verwijderd zodat targets blijven
     setScores({});
     setHistory([]);
     setActive(null);
@@ -327,19 +332,19 @@ export default function App() {
                     </>
                   )}
 
-                  {isSelected && (
-                    <input
-                      type="number"
-                      placeholder="🎯"
-                      onChange={e =>
-                        setTargets({
-                          ...targets,
-                          [p.id]: Number(e.target.value)
-                        })
-                      }
-                      style={{ width: 70 }}
-                    />
-                  )}
+                  {/* ✅ TARGET ALTijd zichtbaar */}
+                  <input
+                    type="number"
+                    value={targets[p.id] || ""}
+                    placeholder="🎯"
+                    onChange={e =>
+                      setTargets({
+                        ...targets,
+                        [p.id]: Number(e.target.value)
+                      })
+                    }
+                    style={{ width: 70 }}
+                  />
 
                   <button onClick={() => togglePlayer(p)} style={{
                     background: isSelected ? "#22c55e" : "#334155",
@@ -364,14 +369,13 @@ export default function App() {
               </button>
             )}
 
-            {/* GRID STATS */}
+            {/* GRID STATS (ONGEWIJZIGD) */}
             <div style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gap: 20,
               marginTop: 30
             }}>
-
               <div>
                 <h3>🏆 Ranking</h3>
                 {ranking.map((p,i)=>(
@@ -399,12 +403,11 @@ export default function App() {
                   <div key={i}>{m.p1} vs {m.p2} → {m.w1}-{m.w2}</div>
                 ))}
               </div>
-
             </div>
           </>
         )}
 
-        {/* GAME = ONGEWIJZIGD */}
+        {/* GAME */}
         {game && (
           <>
             <div style={{ display: "flex", gap: 10 }}>
@@ -424,6 +427,7 @@ export default function App() {
                     <div style={{ fontSize: 28 }}>{scores[p.id]}</div>
                     <div>/ {targets[p.id]}</div>
 
+                    {/* ✅ MAX 3 + SCROLL */}
                     <div style={{
                       marginTop: 6,
                       maxHeight: 80,
