@@ -435,10 +435,15 @@ return (
                         : "white"
                   }}>
                     {p.name}
-<div style={{ fontSize: 36, fontWeight: "bold" }}>
+<div style={{ 
+  fontSize: 36, 
+  fontWeight: "bold",
+  color: active === p.id && selected.findIndex(x => x.id === p.id) === 0
+    ? "#000000"
+    : undefined
+}}>
   {scores[p.id]} / {targets[p.id]}
 </div>
-
                     <div style={{
                       marginTop: 6,
                       maxHeight: 80,
