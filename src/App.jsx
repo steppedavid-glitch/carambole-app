@@ -79,7 +79,14 @@ export default function App() {
     );
 
     if (winner) {
-      setGames(prev => [...prev, { players: selected, winner }]);
+      setGames(prev => [
+        ...prev,
+        {
+          players: selected,
+          winner,
+          history: newHistory // 👈 belangrijk voor high score
+        }
+      ]);
 
       setTimeout(() => {
         resetGame();
@@ -155,6 +162,27 @@ export default function App() {
     return Object.values(results);
   };
 
+  // ---------- HIGH SCORE ----------
+  const getHighScores = () => {
+    const scoresMap = {};
+
+    games.forEach(g => {
+      if (!g.history) return;
+
+      g.history.forEach(h => {
+        if (!scoresMap[h.player] || h.val > scoresMap[h.player]) {
+          scoresMap[h.player] = h.val;
+        }
+      });
+    });
+
+    return players.map(p => ({
+      name: p.name,
+      score: scoresMap[p.id] || 0
+    }))
+    .sort((a, b) => b.score - a.score);
+  };
+
   const ranking = [...players].sort(
     (a, b) => getStats(b).wins - getStats(a).wins
   );
@@ -188,7 +216,7 @@ export default function App() {
             fontWeight: "bold",
             boxShadow: "0 0 25px rgba(37,99,235,0.6)"
           }}>
-            🎱 Carambole Elite
+            🎱 Carambole John, David & Bjarni
           </div>
         </div>
 
@@ -278,6 +306,13 @@ export default function App() {
               );
             })}
 
+            <h3 style={{ marginTop: 30 }}>🔥 Hoogste score (1 beurt)</h3>
+            {getHighScores().map((p, i) => (
+              <div key={i}>
+                {i+1}. {p.name} — {p.score}
+              </div>
+            ))}
+
             <h3 style={{ marginTop: 30 }}>🤝 Onderlinge duels</h3>
             {getHeadToHead().map((m, i) => (
               <div key={i}>
@@ -307,7 +342,6 @@ export default function App() {
                     <div style={{ fontSize: 28 }}>{scores[p.id]}</div>
                     <div>/ {targets[p.id]}</div>
 
-                    {/* SCOREVERLOOP */}
                     <div style={{
                       marginTop: 6,
                       maxHeight: 80,
@@ -317,19 +351,10 @@ export default function App() {
                       padding: 4
                     }}>
                       {lastThree.map((h, i) => (
-                        <div key={i} style={{
-                          fontSize: 14,
-                          fontWeight: i === lastThree.length - 1 ? "bold" : "normal"
-                        }}>
+                        <div key={i}>
                           +{h.val}
                         </div>
                       ))}
-
-                      {playerHistory.length > 3 && (
-                        <div style={{ fontSize: 11, opacity: 0.6 }}>
-                          +{playerHistory.length - 3} oudere
-                        </div>
-                      )}
                     </div>
 
                   </div>
