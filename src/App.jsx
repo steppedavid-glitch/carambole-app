@@ -5,10 +5,11 @@ export default function App() {
   // ---------- STATE ----------
   const [players, setPlayers] = useState([]);
   const [name, setName] = useState("");
+  const [photo, setPhoto] = useState(null);
+  const [photoKey, setPhotoKey] = useState(0);
 
   const [selected, setSelected] = useState([]);
   const [targets, setTargets] = useState({});
-
   const [game, setGame] = useState(false);
 
   const [scores, setScores] = useState({});
@@ -33,12 +34,48 @@ export default function App() {
     localStorage.setItem("games", JSON.stringify(games));
   }, [games]);
 
+  // ---------- PHOTO ----------
+  const handlePhoto = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => setPhoto(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const updatePhoto = (id, e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPlayers(prev =>
+        prev.map(p =>
+          p.id === id ? { ...p, photo: reader.result } : p
+        )
+      );
+    };
+
+    reader.readAsDataURL(file);
+  };
+
   // ---------- PLAYER ----------
   const addPlayer = () => {
     if (!name.trim()) return;
 
-    setPlayers(prev => [...prev, { id: crypto.randomUUID(), name }]);
+    setPlayers(prev => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        name,
+        photo: photo || null
+      }
+    ]);
+
     setName("");
+    setPhoto(null);
+    setPhotoKey(k => k + 1);
   };
 
   const togglePlayer = (p) => {
@@ -134,6 +171,26 @@ export default function App() {
     };
   };
 
+  const getHeadToHead = () => {
+    const results = {};
+
+    games.forEach(g => {
+      if (g.players.length !== 2) return;
+
+      const [p1, p2] = g.players;
+      const key = [p1.name, p2.name].sort().join(" vs ");
+
+      if (!results[key]) {
+        results[key] = { p1: p1.name, p2: p2.name, w1: 0, w2: 0 };
+      }
+
+      if (g.winner.id === p1.id) results[key].w1++;
+      else results[key].w2++;
+    });
+
+    return Object.values(results);
+  };
+
   const ranking = [...players].sort(
     (a, b) => getStats(b).wins - getStats(a).wins
   );
@@ -171,7 +228,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* START SCREEN */}
+        {/* START */}
         {!game && (
           <>
             {/* ADD */}
@@ -181,7 +238,8 @@ export default function App() {
               borderRadius: 16,
               marginBottom: 20,
               display: "flex",
-              gap: 10
+              gap: 10,
+              alignItems: "center"
             }}>
               <input
                 value={name}
@@ -189,6 +247,9 @@ export default function App() {
                 placeholder="Nieuwe speler"
                 style={{ flex: 1, padding: 12, borderRadius: 10 }}
               />
+
+              <input key={photoKey} type="file" onChange={handlePhoto} />
+
               <button onClick={addPlayer} style={{
                 background: "#22c55e",
                 padding: "10px 16px",
@@ -210,6 +271,28 @@ export default function App() {
                   alignItems: "center",
                   gap: 10
                 }}>
+                  <label>
+                    {p.photo ? (
+                      <img src={p.photo} style={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: "50%",
+                        objectFit: "cover"
+                      }} />
+                    ) : (
+                      <div style={{
+                        width: 50,
+                        height: 50,
+                        borderRadius: "50%",
+                        background: "#334155",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center"
+                      }}>📸</div>
+                    )}
+                    <input type="file" hidden onChange={(e)=>updatePhoto(p.id,e)} />
+                  </label>
+
                   <div style={{ flex: 1 }}>{p.name}</div>
 
                   {isSelected && (
@@ -259,6 +342,14 @@ export default function App() {
                 </div>
               );
             })}
+
+            {/* HEAD TO HEAD */}
+            <h3 style={{ marginTop: 30 }}>🤝 Onderlinge duels</h3>
+            {getHeadToHead().map((m, i) => (
+              <div key={i}>
+                {m.p1} vs {m.p2} → {m.w1} - {m.w2}
+              </div>
+            ))}
           </>
         )}
 
@@ -284,7 +375,6 @@ export default function App() {
               {input || 0}
             </div>
 
-            {/* KEYPAD */}
             <div style={{
               display: "grid",
               gridTemplateColumns: "repeat(3,1fr)",
