@@ -41,6 +41,21 @@ export default function App() {
     localStorage.setItem("targets", JSON.stringify(targets)); // ✅ toegevoegd
   }, [targets]);
 
+  
+
+  // ---------- EXPORT ----------
+  const exportData = () => {
+    const data = { players, games, targets };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json"
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "carambole-data.json";
+    a.click();
+  };
+
   // ---------- PLAYER ----------
   const addPlayer = () => {
     if (!name.trim()) return;
@@ -275,6 +290,8 @@ export default function App() {
 
         {!game && (
           <>
+            <button onClick={exportData} style={{width:"100%",padding:12,marginBottom:10,borderRadius:10,background:"#22c55e"}}>💾 Export data</button>
+          <>
             {/* ADD */}
             <div style={{
               background: "#1e293b",
@@ -426,6 +443,10 @@ export default function App() {
                     {p.name}
                     <div style={{ fontSize: 28 }}>{scores[p.id]}</div>
                     <div>/ {targets[p.id]}</div>
+
+                    <div style={{height:6,background:"#334155",borderRadius:4,marginTop:4,overflow:"hidden"}}>
+                      <div style={{width:`${Math.min(100, ((scores[p.id]||0)/(targets[p.id]||1))*100)}%`,background:"#22c55e",height:"100%"}} />
+                    </div>
 
                     {/* ✅ MAX 3 + SCROLL */}
                     <div style={{
