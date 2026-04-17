@@ -205,38 +205,58 @@ export default function App() {
     .sort((a, b) => b.score - a.score);
   };
 
-  const getMoyennes = () => {
-    const stats = {};
+ const getMoyennes = () => {
+  const stats = {};
 
-    games.forEach(g => {
-      if (!g.history) return;
+  games.forEach(g => {
+    if (!g.history) return;
 
-      g.history.forEach(h => {
-        if (!stats[h.player]) {
-          stats[h.player] = { total: 0, turns: 0 };
-        }
+    g.history.forEach(h => {
+      if (!stats[h.player]) {
+        stats[h.player] = { total: 0, turns: 0 };
+      }
 
-        stats[h.player].total += h.val;
-        stats[h.player].turns += 1;
-      });
+      stats[h.player].total += h.val;
+      stats[h.player].turns += 1;
     });
+  });
 
-    return players.map(p => {
-      const s = stats[p.id];
+  return players.map(p => {
+    const s = stats[p.id];
 
-      const avg = s && s.turns
-        ? (s.total / s.turns).toFixed(2)
-        : 0;
+    const avg = s && s.turns
+      ? (s.total / s.turns).toFixed(2)
+      : 0;
 
-      return {
-        name: p.name,
-        avg: Number(avg)
-      };
-    })
-    .sort((a, b) => b.avg - a.avg);
-  };
+    return {
+      name: p.name,
+      avg: Number(avg)
+    };
+  })
+  .sort((a, b) => b.avg - a.avg);
+};
 
-  const ranking = [...players].sort(
+// ✅ NIEUW: totaal gescoorde punten per speler
+const getTotalScores = () => {
+  const totals = {};
+
+  games.forEach(g => {
+    if (!g.history) return;
+
+    g.history.forEach(h => {
+      if (!totals[h.player]) totals[h.player] = 0;
+      totals[h.player] += h.val;
+    });
+  });
+
+  return players.map(p => ({
+    name: p.name,
+    total: totals[p.id] || 0
+  }))
+  .sort((a, b) => b.total - a.total);
+};
+
+const ranking = [...players].sort(
   (a, b) => getStats(b).winRate - getStats(a).winRate
 );
 
@@ -371,7 +391,7 @@ return (
           {/* GRID STATS */}
           <div style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: "1fr 1fr 1fr",
             gap: 20,
             marginTop: 30
           }}>
@@ -398,13 +418,23 @@ return (
               ))}
             </div>
 
-              <div>
-                <h3>🤝 Duels</h3>
-                {getHeadToHead().map((m,i)=>(
-                  <div key={i}>{m.p1} vs {m.p2} → {m.w1}-{m.w2}</div>
-                ))}
-              </div>
-            </div>
+             <div>
+  <h3>🤝 Duels</h3>
+  {getHeadToHead().map((m,i)=>(
+    <div key={i}>{m.p1} vs {m.p2} → {m.w1}-{m.w2}</div>
+  ))}
+</div>
+
+<div>
+  <h3>🏁 Totaal Caramboles</h3>
+  {getTotalScores().map((p,i)=>(
+    <div key={i}>
+      {i+1}. {p.name} — {p.total}
+    </div>
+  ))}
+</div>
+
+</div>
           </>
         )}
 
