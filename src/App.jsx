@@ -237,8 +237,8 @@ export default function App() {
   };
 
   const ranking = [...players].sort(
-  (a, b) => getStats(b).winRate - getStats(a).winRate
-);
+    (a, b) => getStats(b).wins - getStats(a).wins
+  );
 
   const btn = {
     height: 55,
@@ -378,11 +378,10 @@ export default function App() {
             }}>
               <div>
                 <h3>🏆 Ranking</h3>
-{ranking.map((p,i)=>(
-  <div key={p.id}>
-    {i+1}. {p.name} — {getStats(p).wins}W - {getStats(p).played - getStats(p).wins}V ({getStats(p).winRate}%)
-  </div>
-))}
+                {ranking.map((p,i)=>(
+                  <div key={p.id}>{i+1}. {p.name} — {getStats(p).wins}W</div>
+                ))}
+              </div>
 
               <div>
                 <h3>🔥 Hoogste score</h3>
