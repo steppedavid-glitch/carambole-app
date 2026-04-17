@@ -405,196 +405,87 @@ return (
     <h3 style={{marginBottom:10}}>🏆 Ranking</h3>
 
     {ranking.map((p,i) => {
-  const stats = getStats(p);
+      const stats = getStats(p);
 
-  const bg =
-    i === 0 ? "linear-gradient(135deg,#facc15,#eab308)" :
-    i === 1 ? "linear-gradient(135deg,#e5e7eb,#9ca3af)" :
-    i === 2 ? "linear-gradient(135deg,#d97706,#92400e)" :
-    "#0f172a";
+      const bg =
+        i === 0 ? "linear-gradient(135deg,#facc15,#eab308)" :
+        i === 1 ? "linear-gradient(135deg,#e5e7eb,#9ca3af)" :
+        i === 2 ? "linear-gradient(135deg,#d97706,#92400e)" :
+        "#0f172a";
 
-  const color = i < 3 ? "#000000" : "#ffffff";
+      const color = i < 3 ? "#000000" : "#ffffff";
 
-  const recent = games
-    .filter(g => g.players.find(pl => pl.id === p.id))
-    .slice(-5)
-    .map(g => g.winner.id === p.id ? "W" : "V");
+      const recent = games
+        .filter(g => g.players.find(pl => pl.id === p.id))
+        .slice(-5)
+        .map(g => g.winner.id === p.id ? "W" : "V");
 
-  return (
-    <div key={p.id} style={{
-      padding: 12,
-      borderRadius: 12,
-      background: bg,
-      color: color,
-      marginBottom: 8
-    }}>
+      return (
+        <div key={p.id} style={{
+          padding: 12,
+          borderRadius: 12,
+          background: bg,
+          color: color,
+          marginBottom: 8
+        }}>
 
-      <div style={{
-        display:"flex",
-        justifyContent:"space-between"
-      }}>
-        <div style={{fontWeight:"bold"}}>
-          {i === 0 && "👑 "}
-          {i+1}. {p.name}
+          <div style={{
+            display:"flex",
+            justifyContent:"space-between"
+          }}>
+            <div style={{fontWeight:"bold"}}>
+              {i === 0 && "👑 "}
+              {i+1}. {p.name}
+            </div>
+
+            <div>
+              {stats.wins}W - {stats.played - stats.wins}V
+            </div>
+          </div>
+
+          <div style={{
+            marginTop:6,
+            background:"rgba(255,255,255,0.2)",
+            height:6,
+            borderRadius:6
+          }}>
+            <div style={{
+              width:`${stats.winRate}%`,
+              background:"#22c55e",
+              height:"100%"
+            }} />
+          </div>
+
+          <div style={{
+            display:"flex",
+            justifyContent:"space-between",
+            fontSize:12,
+            marginTop:4
+          }}>
+            <div>{stats.winRate}%</div>
+
+            <div>
+              {recent.map((r,idx)=>(
+                <span key={idx} style={{
+                  color: r==="W" ? "#22c55e" : "#ef4444",
+                  marginLeft:4
+                }}>
+                  {r}
+                </span>
+              ))}
+            </div>
+          </div>
+
         </div>
-
-        <div>
-          {stats.wins}W - {stats.played - stats.wins}V
-        </div>
-      </div>
-
-      <div style={{
-        marginTop:6,
-        background:"rgba(255,255,255,0.2)",
-        height:6,
-        borderRadius:6
-      }}>
-        <div style={{
-          width:`${stats.winRate}%`,
-          background:"#22c55e",
-          height:"100%"
-        }} />
-      </div>
-
-      <div style={{
-        display:"flex",
-        justifyContent:"space-between",
-        fontSize:12,
-        marginTop:4
-      }}>
-        <div>{stats.winRate}%</div>
-
-        <div>
-          {recent.map((r,idx)=>(
-            <span key={idx} style={{
-              color: r==="W" ? "#22c55e" : "#ef4444",
-              marginLeft:4
-            }}>
-              {r}
-            </span>
-          ))}
-        </div>
-      </div>
-
-    </div>
-  );
-})}    
+      );
+    })}    
   </div>
 
 </div>
-        {/* GAME */}
-        {game && (
-          <>
-            <div style={{ display: "flex", gap: 10 }}>
-              {selected.map(p => {
 
-                const playerHistory = history.filter(h => h.player === p.id);
-                const lastThree = playerHistory.slice(-3);
+</>   {/* ✅ DIT WAS DE MISSENDE FIX */}
+)}   {/* ✅ sluit !game correct af */}
 
-                return (
-                  <div key={p.id} style={{
-                    flex: 1,
-                    padding: 10,
-                    borderRadius: 10,
-                    background:
-                      active === p.id
-                        ? selected.findIndex(x => x.id === p.id) === 0
-                          ? "#facc15"
-                          : "#ffffff"
-                        : "#1e293b",
-                    color:
-                      active === p.id &&
-                      selected.findIndex(x => x.id === p.id) === 1
-                        ? "#000000"
-                        : "white"
-                  }}>
-                    {p.name}
-<div style={{ 
-  fontSize: 36, 
-  fontWeight: "bold",
-  color: active === p.id && selected.findIndex(x => x.id === p.id) === 0
-    ? "#000000"
-    : undefined
-}}>
-  {scores[p.id]} / {targets[p.id]}
-</div>
-                    <div style={{
-                      marginTop: 6,
-                      maxHeight: 80,
-                      overflowY: "auto",
-                      background: "rgba(0,0,0,0.2)",
-                      borderRadius: 6,
-                      padding: 4
-                    }}>
-                      {lastThree.map((h, i) => (
-                        <div key={i}>
-                          +{h.val}
-                        </div>
-                      ))}
-                    </div>
-
-                  </div>
-                );
-              })}
-            </div>
-
-            <div style={{ textAlign: "center", fontSize: 32 }}>
-              {input || 0}
-            </div>
-
-           <div style={{
-  display: "grid",
-  gridTemplateColumns: "repeat(4,1fr)",
-  gap: 8
-}}>
-  {[1,2,3,4,5,6,7,8,9].map(n => (
-    <button 
-      key={n} 
-      style={{...btn, fontSize: 24, fontWeight: "bold"}} 
-      onClick={()=>setInput(v=>v+n)}
-    >
-      {n}
-    </button>
-  ))}
-
-  <button 
-    style={{...btn, background:"#facc15", fontWeight:"bold"}} 
-    onClick={()=>setInput("")}
-  >
-    C
-  </button>
-
-  <button 
-    style={{...btn, fontSize: 24, fontWeight:"bold"}} 
-    onClick={()=>setInput(v=>v+"0")}
-  >
-    0
-  </button>
-
-  {/* OK knop groot en rechts */}
-  <button 
-    style={{
-      ...btn,
-      background:"#22c55e",
-      gridColumn: "4",
-      gridRow: "1 / span 4",
-      height: "100%",
-      fontSize: 24,
-      fontWeight: "bold"
-    }} 
-    onClick={submitScore}
-  >
-    OK
-  </button>
-
-  <button style={{...btn, background:"#ef4444"}} onClick={undo}>Undo</button>
-  <button style={{...btn, background:"#be185d", color:"#ffffff"}} onClick={()=>setActive(selected[(selected.findIndex(p => p.id === active)+1)%selected.length].id)}>Beurt</button>
-  <button style={{...btn, background:"#6b7280"}} onClick={resetGame}>New</button>
-</div>
-          </>
-        )}
-
-      </div>
-    </div>
-  );
-}
+{/* GAME */}
+{game && (
+  <>
