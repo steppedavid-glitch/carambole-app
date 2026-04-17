@@ -84,7 +84,7 @@ export default function App() {
         {
           players: selected,
           winner,
-          history: newHistory // 👈 belangrijk voor high score
+          history: newHistory
         }
       ]);
 
@@ -183,6 +183,38 @@ export default function App() {
     .sort((a, b) => b.score - a.score);
   };
 
+  // ---------- MOYENNE ----------
+  const getMoyennes = () => {
+    const stats = {};
+
+    games.forEach(g => {
+      if (!g.history) return;
+
+      g.history.forEach(h => {
+        if (!stats[h.player]) {
+          stats[h.player] = { total: 0, turns: 0 };
+        }
+
+        stats[h.player].total += h.val;
+        stats[h.player].turns += 1;
+      });
+    });
+
+    return players.map(p => {
+      const s = stats[p.id];
+
+      const avg = s && s.turns
+        ? (s.total / s.turns).toFixed(2)
+        : 0;
+
+      return {
+        name: p.name,
+        avg: Number(avg)
+      };
+    })
+    .sort((a, b) => b.avg - a.avg);
+  };
+
   const ranking = [...players].sort(
     (a, b) => getStats(b).wins - getStats(a).wins
   );
@@ -216,7 +248,7 @@ export default function App() {
             fontWeight: "bold",
             boxShadow: "0 0 25px rgba(37,99,235,0.6)"
           }}>
-            🎱 Carambole John, David & Bjarni
+            🎱 Carambole Elite
           </div>
         </div>
 
@@ -313,6 +345,13 @@ export default function App() {
               </div>
             ))}
 
+            <h3 style={{ marginTop: 30 }}>🎯 Gemiddelde per beurt</h3>
+            {getMoyennes().map((p, i) => (
+              <div key={i}>
+                {i+1}. {p.name} — {p.avg}
+              </div>
+            ))}
+
             <h3 style={{ marginTop: 30 }}>🤝 Onderlinge duels</h3>
             {getHeadToHead().map((m, i) => (
               <div key={i}>
@@ -380,10 +419,7 @@ export default function App() {
               <button style={{...btn, background:"#22c55e"}} onClick={submitScore}>OK</button>
 
               <button style={{...btn, background:"#ef4444"}} onClick={undo}>Undo</button>
-              <button style={{...btn, background:"#3b82f6"}} onClick={()=>{
-                const idx = selected.findIndex(p => p.id === active);
-                setActive(selected[(idx + 1) % selected.length].id);
-              }}>Beurt</button>
+              <button style={{...btn, background:"#3b82f6"}} onClick={()=>setActive(selected[(selected.findIndex(p => p.id === active)+1)%selected.length].id)}>Beurt</button>
               <button style={{...btn, background:"#6b7280"}} onClick={resetGame}>New</button>
             </div>
           </>
