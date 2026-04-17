@@ -134,7 +134,7 @@ export default function App() {
     };
   };
 
-  // ---------- HEAD TO HEAD (NIEUW) ----------
+  // ---------- HEAD TO HEAD ----------
   const getHeadToHead = () => {
     const results = {};
 
@@ -195,7 +195,6 @@ export default function App() {
         {/* START SCREEN */}
         {!game && (
           <>
-            {/* ADD */}
             <div style={{
               background: "#1e293b",
               padding: 20,
@@ -217,7 +216,6 @@ export default function App() {
               }}>➕</button>
             </div>
 
-            {/* PLAYERS */}
             {players.map(p => {
               const isSelected = selected.find(x => x.id === p.id);
 
@@ -270,7 +268,6 @@ export default function App() {
               </button>
             )}
 
-            {/* RANKING */}
             <h3 style={{ marginTop: 30 }}>🏆 Ranking</h3>
             {ranking.map((p,i)=>{
               const s = getStats(p);
@@ -281,7 +278,6 @@ export default function App() {
               );
             })}
 
-            {/* HEAD TO HEAD (NIEUW) */}
             <h3 style={{ marginTop: 30 }}>🤝 Onderlinge duels</h3>
             {getHeadToHead().map((m, i) => (
               <div key={i}>
@@ -295,25 +291,56 @@ export default function App() {
         {game && (
           <>
             <div style={{ display: "flex", gap: 10 }}>
-              {selected.map(p => (
-                <div key={p.id} style={{
-                  flex: 1,
-                  padding: 10,
-                  borderRadius: 10,
-                  background: active === p.id ? "#22c55e" : "#1e293b"
-                }}>
-                  {p.name}
-                  <div style={{ fontSize: 28 }}>{scores[p.id]}</div>
-                  <div>/ {targets[p.id]}</div>
-                </div>
-              ))}
+              {selected.map(p => {
+
+                const playerHistory = history.filter(h => h.player === p.id);
+                const lastThree = playerHistory.slice(-3);
+
+                return (
+                  <div key={p.id} style={{
+                    flex: 1,
+                    padding: 10,
+                    borderRadius: 10,
+                    background: active === p.id ? "#22c55e" : "#1e293b"
+                  }}>
+                    {p.name}
+                    <div style={{ fontSize: 28 }}>{scores[p.id]}</div>
+                    <div>/ {targets[p.id]}</div>
+
+                    {/* SCOREVERLOOP */}
+                    <div style={{
+                      marginTop: 6,
+                      maxHeight: 80,
+                      overflowY: "auto",
+                      background: "rgba(0,0,0,0.2)",
+                      borderRadius: 6,
+                      padding: 4
+                    }}>
+                      {lastThree.map((h, i) => (
+                        <div key={i} style={{
+                          fontSize: 14,
+                          fontWeight: i === lastThree.length - 1 ? "bold" : "normal"
+                        }}>
+                          +{h.val}
+                        </div>
+                      ))}
+
+                      {playerHistory.length > 3 && (
+                        <div style={{ fontSize: 11, opacity: 0.6 }}>
+                          +{playerHistory.length - 3} oudere
+                        </div>
+                      )}
+                    </div>
+
+                  </div>
+                );
+              })}
             </div>
 
             <div style={{ textAlign: "center", fontSize: 32 }}>
               {input || 0}
             </div>
 
-            {/* KEYPAD */}
             <div style={{
               display: "grid",
               gridTemplateColumns: "repeat(3,1fr)",
